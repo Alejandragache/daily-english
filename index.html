@@ -98,6 +98,9 @@ table.conj{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
 table.conj td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
 table.conj td:first-child{color:var(--muted);width:42%}
 details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(30px);opacity:0;pointer-events:none;transition:.3s;background:#111;color:#fff;border:2px solid var(--pri);border-radius:18px;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:50;max-width:calc(100% - 32px);font-weight:600}
+#toast img{width:40px;height:40px}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)} #toast.bad{border-color:var(--org)}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
 </head>
@@ -296,7 +299,8 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 <!-- AJUSTES -->
 <section id="v-set" class="hide">
   <div class="card">
-    <h2>⚙️ Ajustes</h2>
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">⚙️ Ajustes</h2><button id="cfgSaveTop">💾 Guardar</button></div>
+    <p class="sub">Los cambios se guardan solos, pero puedes tocar 💾 Guardar para estar segura.</p>
     <label for="cfgName">Tu nombre</label>
     <input id="cfgName" type="text" style="font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
     <label for="cfgLevel">Nivel</label>
@@ -317,11 +321,11 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgIggy" style="width:22px;height:22px"> 🦎 Iggy me habla (me felicita en inglés)</label>
     <label for="cfgAI">🤖 Clave gratis de Google Gemini (opcional)</label>
     <input id="cfgAI" type="password" autocomplete="off" placeholder="Pega aquí tu clave (empieza por AIza...)" style="font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
-    <p class="sub" style="margin-top:4px">Con la clave, Iggy responde cualquier pregunta tuya en “💬 Conversar → Pregúntale a Iggy”. Sácala gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. La clave se guarda solo en esta tablet.</p>
+    <p class="sub" style="margin-top:4px">Con la clave, Iggy responde cualquier pregunta tuya en “💬 Hablar → ❓ Pregúntale a Iggy” (menú de arriba). Sácala gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. La clave se guarda solo en esta tablet.</p>
     <label for="cfgTime">Hora del recordatorio diario</label>
     <input id="cfgTime" type="time">
     <div class="row" style="margin-top:14px">
-      <button id="cfgSave">Guardar</button>
+      <button id="cfgSave" class="big">💾 Guardar ajustes</button>
       <button class="sec" id="cfgNotif">🔔 Activar notificaciones</button>
     </div>
     <p class="sub" id="notifInfo"></p>
@@ -478,7 +482,9 @@ const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 const dayKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{},cw:{},vToday:null,vLearned:[],aiKey:"",aiModel:"",cFlow:true};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{const j=JSON.stringify(S);localStorage.setItem(KEY,j);return localStorage.getItem(KEY)===j}catch(e){return false}};
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+addEventListener("pagehide",()=>save());document.addEventListener("visibilitychange",()=>{if(document.hidden)save()});
 const $=id=>document.getElementById(id);
 
 function countToday(){return S.days[today()]||0}
@@ -1075,11 +1081,26 @@ function renderSet(){
   const t=S.total;$("totals").textContent=`Has hecho ${t.listen||0} ejercicios de escuchar, ${t.speak||0} de hablar, ${t.talk||0} de conversación, ${t.read||0} de lectura, ${t.write||0} de escritura y ${t.b1||0} de gramática B1. Días practicados: ${Object.keys(S.days).length}.`;
   notifStatus();
 }
-$("cfgSave").onclick=()=>{
+function saveSettings(silent){
   S.name=$("cfgName").value.trim();S.level=+$("cfgLevel").value;S.goal=Math.min(60,Math.max(3,+$("cfgGoal").value||10));
-  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;S.aiKey=$("cfgAI").value.trim();S.iggyVoice=$("cfgIggy").checked;applyEng();save();syncSW();
-  $("cfgSave").textContent="✓ Guardado";setTimeout(()=>$("cfgSave").textContent="Guardar",1500);
-};
+  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;S.aiKey=$("cfgAI").value.trim();S.iggyVoice=$("cfgIggy").checked;applyEng();const ok=save();syncSW();renderHome();
+  if(!silent)toast(ok?"¡Guardado! Ya no se me olvida. 🦎":"No pude guardar. ¿Estás en modo incógnito? Abre la app desde el ícono de la pantalla.",!ok);
+}
+$("cfgSave").onclick=()=>saveSettings();
+$("cfgSaveTop").onclick=()=>saveSettings();
+// guardado automático: al escribir, al cambiar y al tocar Enter
+let cfgT=null;
+["cfgName","cfgLevel","cfgGoal","cfgAccent","cfgTime","cfgEng","cfgIggy","cfgAI"].forEach(id=>{const el=$(id);
+  el.addEventListener("input",()=>{clearTimeout(cfgT);cfgT=setTimeout(()=>saveSettings(true),400)});
+  el.addEventListener("change",()=>saveSettings(id!=="cfgName"&&id!=="cfgAI"));
+  el.addEventListener("blur",()=>saveSettings(true));
+  el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();el.blur();saveSettings()}});
+});
+function toast(msg,bad){
+  let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";document.body.appendChild(t)}
+  t.innerHTML=`<img src="${bad?"iguana-sad.svg":"iguana.svg"}" alt=""><span>${msg}</span>`;t.className="show"+(bad?" bad":"");
+  clearTimeout(t._h);t._h=setTimeout(()=>t.className="",2800);
+}
 $("exportBtn").onclick=async()=>{const t=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(t);alert("Copia copiada. Pégala en una nota o envíatela por WhatsApp para guardarla.")}catch(e){prompt("Copia este texto y guárdalo:",t)}};
 $("importBtn").onclick=()=>{const t=prompt("Pega aquí tu copia de seguridad:");if(!t)return;try{Object.assign(S,JSON.parse(decodeURIComponent(escape(atob(t.trim())))));save();renderSet();alert("¡Progreso restaurado!")}catch(e){alert("Ese texto no es una copia válida.")}};
 
