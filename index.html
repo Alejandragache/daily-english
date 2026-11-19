@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily English</title>
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1c2333;--muted:#6b7385;--pri:#2563eb;--pri2:#dbe6ff;--ok:#16a34a;--okbg:#dcfce7;--bad:#dc2626;--badbg:#fee2e2;--warn:#f59e0b;--line:#e4e7ef}
+@media (prefers-color-scheme:dark){:root{--bg:#10141c;--card:#1a2030;--ink:#eef1f7;--muted:#9aa3b5;--pri:#5b8cff;--pri2:#243461;--okbg:#14321f;--badbg:#3a1717;--line:#2b3347}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+header{padding:20px 16px 8px;max-width:760px;margin:auto}
+h1{font-size:24px;margin:0}
+h2{font-size:20px;margin:0 0 10px}
+.sub{color:var(--muted);font-size:15px}
+main{max-width:760px;margin:auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center}
+.stat b{display:block;font-size:28px}
+.stat span{font-size:13px;color:var(--muted)}
+button{font:inherit;border:0;border-radius:14px;padding:13px 18px;background:var(--pri);color:#fff;font-weight:600;cursor:pointer;min-height:48px}
+button.sec{background:var(--pri2);color:var(--ink)}
+button.ghost{background:transparent;color:var(--pri);padding:8px 10px;min-height:auto}
+button:disabled{opacity:.5}
+button.big{width:100%;font-size:19px;padding:18px}
+.mic{width:96px;height:96px;border-radius:50%;font-size:40px;padding:0;display:grid;place-items:center;margin:8px auto}
+.mic.on{background:var(--bad);animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.phrase{font-size:24px;font-weight:600;margin:6px 0}
+.es{color:var(--muted);font-size:16px}
+textarea,select,input[type=number],input[type=time]{font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+textarea{min-height:80px}
+.fb{border-radius:14px;padding:12px;margin-top:12px}
+.fb.ok{background:var(--okbg)} .fb.bad{background:var(--badbg)}
+.w{display:inline-block;padding:2px 6px;border-radius:8px;margin:2px}
+.w.ok{background:var(--okbg);color:var(--ok)} .w.miss{background:var(--badbg);color:var(--bad);text-decoration:underline}
+.bar{height:14px;background:var(--line);border-radius:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);transition:width .4s}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{background:transparent;color:var(--muted);flex:1;min-width:0;padding:6px 0;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px}
+nav button .ic{font-size:22px}
+nav button.act{color:var(--pri)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal div{aspect-ratio:1;border-radius:8px;background:var(--line);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.cal div.done{background:var(--ok);color:#fff}
+.cal div.part{background:var(--warn);color:#fff}
+.cal div.today{outline:2px solid var(--pri)}
+.banner{background:#fff4d6;color:#5a3b00;border-radius:14px;padding:12px 14px;margin:10px 0}
+@media (prefers-color-scheme:dark){.banner{background:#3a2c08;color:#ffe3a3}}
+.hide{display:none!important}
+label{display:block;margin:10px 0 4px;font-weight:600}
+body.eng .es,body.eng #rTr,body.eng .gexp-es{display:none!important}
+.opt{display:block;width:100%;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line);margin:6px 0;font-weight:500}
+.opt.right{background:var(--okbg);border-color:var(--ok)} .opt.wrong{background:var(--badbg);border-color:var(--bad)}
+.topic{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.topic:last-child{border:0}
+.pill{font-size:13px;border-radius:999px;padding:2px 10px;background:var(--line);white-space:nowrap}
+.pill.good{background:var(--okbg);color:var(--ok)} .pill.mid{background:#fff1c9;color:#8a5a00}
+a{color:var(--pri)}
+.tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="row" style="justify-content:space-between"><h1>🇬🇧 Daily English</h1><button class="sec" id="gearBtn" aria-label="Ajustes" style="min-height:44px;padding:8px 14px">⚙️ Ajustes</button></div>
+  <div class="sub" id="hello">Speaking, listening, reading, writing y gramática B1</div>
+</header>
+<main>
+
+<!-- HOY -->
+<section id="v-home">
+  <div id="banner" class="banner hide"></div>
+  <div class="stats">
+    <div class="stat"><b id="sStreak">0</b><span>🔥 días seguidos</span></div>
+    <div class="stat"><b id="sToday">0</b><span>ejercicios hoy</span></div>
+    <div class="stat"><b id="sBest">0</b><span>🏆 mejor racha</span></div>
+  </div>
+  <div class="card">
+    <h2>Meta de hoy</h2>
+    <div class="bar"><i id="goalBar" style="width:0"></i></div>
+    <p class="sub" id="goalTxt"></p>
+    <button class="big" id="startDaily">▶️ Empezar práctica de hoy</button>
+    <p class="sub">La práctica diaria mezcla ejercicios de escuchar y de hablar. Tu racha solo sube si cumples la meta completa.</p>
+  </div>
+  <div class="card">
+    <h2>Últimos 28 días</h2>
+    <div class="cal" id="cal"></div>
+    <p class="sub">🟩 meta cumplida · 🟧 practicaste un poco</p>
+  </div>
+</section>
+
+<!-- ESCUCHAR -->
+<section id="v-listen" class="hide">
+  <div class="card">
+    <span class="tag" id="lTag"></span>
+    <h2>🎧 Escucha y escribe</h2>
+    <p class="sub">Toca el botón, escucha la frase y escribe lo que oíste. Puedes repetirla las veces que quieras.</p>
+    <div class="row">
+      <button id="lPlay">🔊 Escuchar</button>
+      <button class="sec" id="lSlow">🐢 Lento</button>
+    </div>
+    <label for="lInput">¿Qué escuchaste?</label>
+    <textarea id="lInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escribe aquí en inglés..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="lCheck">✅ Revisar</button>
+      <button class="sec hide" id="lNext">Siguiente ➡️</button>
+      <button class="ghost" id="lShow">Ver respuesta</button>
+    </div>
+    <div id="lFb"></div>
+  </div>
+</section>
+
+<!-- HABLAR -->
+<section id="v-speak" class="hide">
+  <div class="card" style="text-align:center">
+    <span class="tag" id="sTag"></span>
+    <h2>🗣️ Lee en voz alta</h2>
+    <div class="phrase" id="sPhrase"></div>
+    <div class="es" id="sEs"></div>
+    <div class="row" style="justify-content:center;margin-top:10px">
+      <button class="sec" id="sModel">🔊 Oír cómo se dice</button>
+      <button class="sec" id="sModelSlow">🐢 Lento</button>
+    </div>
+    <button class="mic" id="sMic" aria-label="Hablar">🎤</button>
+    <div class="sub" id="sHint">Toca el micrófono y di la frase</div>
+    <div id="sFb" style="text-align:left"></div>
+    <div class="row" style="justify-content:center;margin-top:10px">
+      <button class="sec hide" id="sNext">Siguiente ➡️</button>
+      <button class="ghost" id="sSkip">Saltar</button>
+    </div>
+    <button class="sec" id="goTalk" style="margin-top:12px">💬 Practicar conversación (responder preguntas)</button>
+    <div id="noSR" class="banner hide" style="text-align:left">Tu navegador no permite reconocer voz. Abre la app en <b>Google Chrome</b> para usar este ejercicio.</div>
+  </div>
+</section>
+
+<!-- RESPONDER (conversación) -->
+<section id="v-talk" class="hide">
+  <div class="card" style="text-align:center">
+    <span class="tag">Conversación</span>
+    <h2>💬 Responde la pregunta</h2>
+    <p class="sub">Escucha la pregunta y respóndela con tus palabras, en voz alta. No hay respuesta única: lo importante es hablar.</p>
+    <div class="phrase" id="tQ"></div>
+    <div class="es" id="tEs"></div>
+    <div class="row" style="justify-content:center;margin-top:10px">
+      <button class="sec" id="tPlay">🔊 Oír pregunta</button>
+    </div>
+    <button class="mic" id="tMic" aria-label="Responder">🎤</button>
+    <div class="sub" id="tHint">Toca el micrófono y responde (mínimo 5 palabras)</div>
+    <div id="tFb" style="text-align:left"></div>
+    <div class="row" style="justify-content:center;margin-top:10px">
+      <button class="sec hide" id="tNext">Siguiente ➡️</button>
+      <button class="ghost" id="tSkip">Otra pregunta</button>
+    </div>
+  </div>
+</section>
+
+<!-- B1 -->
+<section id="v-b1" class="hide">
+  <div id="b1Home">
+    <div class="card">
+      <h2>🎓 Preparación examen B1</h2>
+      <label for="examDate">Fecha de tu examen</label>
+      <input id="examDate" type="date">
+      <p class="sub" id="examInfo"></p>
+      <h3 style="margin:14px 0 6px">📅 Hoy estudia:</h3>
+      <div id="planToday"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="mockBtn">📝 Simulacro de examen (30 preguntas)</button>
+        <button class="sec" id="errBtn">📕 Repasar mis errores</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Plan completo</h2>
+      <div id="planAll"></div>
+    </div>
+  </div>
+  <div id="b1Topic" class="hide">
+    <button class="ghost" id="b1Back">⬅ Volver al plan</button>
+    <div class="card">
+      <span class="tag" id="gTag">Gramática B1</span>
+      <h2 id="gTitle"></h2>
+      <div class="sub" id="gEs"></div>
+      <div id="gExp" class="es-exp" style="margin-top:8px"></div>
+      <div id="gEx"></div>
+      <p><a id="gLink" target="_blank" rel="noopener">🌐 Ver más explicación y ejercicios en internet</a></p>
+    </div>
+    <div class="card" id="gQuiz"></div>
+  </div>
+</section>
+
+<!-- LEER -->
+<section id="v-read" class="hide">
+  <div class="card">
+    <span class="tag" id="rTag"></span>
+    <h2>📖 Lee y responde</h2>
+    <p class="sub">Lee el texto con calma. Si quieres, escúchalo mientras lees. Luego responde las preguntas.</p>
+    <div class="row"><button class="sec" id="rPlay">🔊 Escuchar el texto</button><button class="ghost" id="rTr">Ver traducción</button></div>
+    <h3 id="rTitle" style="margin:14px 0 6px"></h3>
+    <p id="rText" style="font-size:19px;line-height:1.6"></p>
+    <p id="rEs" class="es hide"></p>
+    <div id="rQs"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="rCheck">✅ Revisar</button>
+      <button class="sec hide" id="rNext">Siguiente ➡️</button>
+    </div>
+    <div id="rFb"></div>
+  </div>
+</section>
+
+<!-- ESCRIBIR -->
+<section id="v-write" class="hide">
+  <div class="card">
+    <span class="tag" id="wTag"></span>
+    <h2>✍️ Escribe en inglés</h2>
+    <p class="sub" id="wInstr"></p>
+    <div class="phrase" id="wPrompt"></div>
+    <textarea id="wInput" autocomplete="off" spellcheck="false" placeholder="Escribe aquí en inglés..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="wCheck">✅ Revisar</button>
+      <button class="sec hide" id="wNext">Siguiente ➡️</button>
+      <button class="ghost" id="wSkip">Otro</button>
+    </div>
+    <div id="wFb"></div>
+  </div>
+</section>
+
+<!-- AJUSTES -->
+<section id="v-set" class="hide">
+  <div class="card">
+    <h2>⚙️ Ajustes</h2>
+    <label for="cfgName">Tu nombre</label>
+    <input id="cfgName" type="text" style="font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
+    <label for="cfgLevel">Nivel</label>
+    <select id="cfgLevel">
+      <option value="1">Básico (A1–A2)</option>
+      <option value="2">Intermedio (B1)</option>
+      <option value="3">Avanzado (B2)</option>
+    </select>
+    <label for="cfgGoal">Ejercicios por día (meta)</label>
+    <input id="cfgGoal" type="number" min="3" max="60">
+    <label for="cfgAccent">Acento de la voz</label>
+    <select id="cfgAccent">
+      <option value="en-US">Estados Unidos</option>
+      <option value="en-GB">Reino Unido</option>
+    </select>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgEng" style="width:22px;height:22px"> Modo solo inglés (oculta las traducciones al español)</label>
+    <p class="sub" style="margin-top:0">Se activa solo cuando tu promedio en los temas B1 llega a 85% o más. Puedes cambiarlo cuando quieras.</p>
+    <label for="cfgTime">Hora del recordatorio diario</label>
+    <input id="cfgTime" type="time">
+    <div class="row" style="margin-top:14px">
+      <button id="cfgSave">Guardar</button>
+      <button class="sec" id="cfgNotif">🔔 Activar notificaciones</button>
+    </div>
+    <p class="sub" id="notifInfo"></p>
+  </div>
+  <div class="card">
+    <h2>Tu progreso</h2>
+    <p class="sub" id="totals"></p>
+    <div class="row">
+      <button class="sec" id="exportBtn">Copiar copia de seguridad</button>
+      <button class="sec" id="importBtn">Restaurar copia</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button data-v="home" class="act"><span class="ic">🏠</span>Hoy</button>
+  <button data-v="b1"><span class="ic">🎓</span>B1</button>
+  <button data-v="listen"><span class="ic">🎧</span>Escuchar</button>
+  <button data-v="speak"><span class="ic">🗣️</span>Hablar</button>
+  <button data-v="read"><span class="ic">📖</span>Leer</button>
+  <button data-v="write"><span class="ic">✍️</span>Escribir</button>
+</nav>
+
+<script src="grammar.js"></script>
+<script>
+// ---------- Contenido ----------
+// [nivel, inglés, español]
+const PHRASES = [
+[1,"Good morning, how are you today?","Buenos días, ¿cómo estás hoy?"],
+[1,"My name is Anna and I am from Colombia.","Me llamo Anna y soy de Colombia."],
+[1,"I would like a cup of coffee, please.","Quisiera una taza de café, por favor."],
+[1,"Where is the bathroom?","¿Dónde está el baño?"],
+[1,"I live in a small apartment.","Vivo en un apartamento pequeño."],
+[1,"What time is it?","¿Qué hora es?"],
+[1,"I work from Monday to Friday.","Trabajo de lunes a viernes."],
+[1,"Can you help me, please?","¿Me puedes ayudar, por favor?"],
+[1,"I don't understand. Can you repeat that?","No entiendo. ¿Puedes repetir eso?"],
+[1,"How much does this cost?","¿Cuánto cuesta esto?"],
+[1,"I have two brothers and one sister.","Tengo dos hermanos y una hermana."],
+[1,"The weather is very nice today.","El clima está muy agradable hoy."],
+[1,"I usually wake up at six o'clock.","Normalmente me despierto a las seis."],
+[1,"She is my best friend.","Ella es mi mejor amiga."],
+[1,"We are going to the supermarket.","Vamos al supermercado."],
+[1,"I like to listen to music.","Me gusta escuchar música."],
+[1,"Nice to meet you.","Mucho gusto en conocerte."],
+[1,"Do you speak Spanish?","¿Hablas español?"],
+[1,"I am hungry. Let's eat something.","Tengo hambre. Comamos algo."],
+[1,"Thank you very much for your help.","Muchas gracias por tu ayuda."],
+[1,"My favorite color is blue.","Mi color favorito es el azul."],
+[1,"It is cold outside.","Hace frío afuera."],
+[1,"I am a student at the university.","Soy estudiante en la universidad."],
+[1,"See you tomorrow.","Nos vemos mañana."],
+[2,"I have been studying English for two years.","He estado estudiando inglés por dos años."],
+[2,"Could you tell me how to get to the train station?","¿Podrías decirme cómo llegar a la estación de tren?"],
+[2,"I'm sorry I'm late, there was a lot of traffic.","Perdón por llegar tarde, había mucho tráfico."],
+[2,"What do you usually do on weekends?","¿Qué sueles hacer los fines de semana?"],
+[2,"I'm looking forward to seeing you again.","Tengo muchas ganas de volver a verte."],
+[2,"If I had more time, I would travel more.","Si tuviera más tiempo, viajaría más."],
+[2,"I need to make an appointment with the doctor.","Necesito pedir una cita con el médico."],
+[2,"Have you ever been to another country?","¿Alguna vez has ido a otro país?"],
+[2,"I didn't sleep well last night.","No dormí bien anoche."],
+[2,"It depends on how much it costs.","Depende de cuánto cueste."],
+[2,"Could I have the bill, please?","¿Me trae la cuenta, por favor?"],
+[2,"I'm thinking about changing my job.","Estoy pensando en cambiar de trabajo."],
+[2,"Let me know if you need anything else.","Avísame si necesitas algo más."],
+[2,"She told me that she was very tired.","Ella me dijo que estaba muy cansada."],
+[2,"We should have left earlier.","Deberíamos haber salido más temprano."],
+[2,"How long does it take to get there?","¿Cuánto tiempo se tarda en llegar allá?"],
+[2,"I'm not sure, but I think it's a good idea.","No estoy segura, pero creo que es buena idea."],
+[2,"Would you mind opening the window?","¿Te importaría abrir la ventana?"],
+[2,"I used to play soccer when I was a child.","Solía jugar fútbol cuando era niña."],
+[2,"The meeting has been moved to Thursday.","La reunión se cambió para el jueves."],
+[3,"Although it was raining, we decided to go for a walk.","Aunque estaba lloviendo, decidimos salir a caminar."],
+[3,"I'd rather stay home tonight, if you don't mind.","Prefiero quedarme en casa esta noche, si no te importa."],
+[3,"By the time we arrived, the movie had already started.","Para cuando llegamos, la película ya había empezado."],
+[3,"It's not worth worrying about things you can't control.","No vale la pena preocuparse por cosas que no puedes controlar."],
+[3,"I've been meaning to call you for weeks.","He querido llamarte desde hace semanas."],
+[3,"Could you elaborate a little bit more on that point?","¿Podrías ampliar un poco más ese punto?"],
+[3,"The more you practice, the easier it gets.","Entre más practicas, más fácil se vuelve."],
+[3,"I can't help thinking that we made a mistake.","No puedo evitar pensar que cometimos un error."],
+[3,"She managed to finish the project ahead of schedule.","Ella logró terminar el proyecto antes de lo previsto."],
+[3,"Unless we leave now, we're going to miss the flight.","A menos que salgamos ya, vamos a perder el vuelo."],
+[3,"I'm used to working under pressure.","Estoy acostumbrada a trabajar bajo presión."],
+[3,"It turned out to be much easier than I expected.","Resultó ser mucho más fácil de lo que esperaba."]
+];
+const QUESTIONS = [
+[1,"What is your name and where are you from?","¿Cómo te llamas y de dónde eres?"],
+[1,"What do you like to eat for breakfast?","¿Qué te gusta desayunar?"],
+[1,"Describe your house or apartment.","Describe tu casa o apartamento."],
+[1,"What is your favorite movie and why?","¿Cuál es tu película favorita y por qué?"],
+[1,"Tell me about your family.","Háblame de tu familia."],
+[1,"What did you do yesterday?","¿Qué hiciste ayer?"],
+[1,"What is the weather like today?","¿Cómo está el clima hoy?"],
+[1,"What do you do in your free time?","¿Qué haces en tu tiempo libre?"],
+[2,"Why are you learning English?","¿Por qué estás aprendiendo inglés?"],
+[2,"Describe your typical day.","Describe un día normal tuyo."],
+[2,"What is the best trip you have ever taken?","¿Cuál es el mejor viaje que has hecho?"],
+[2,"What would you do if you won the lottery?","¿Qué harías si ganaras la lotería?"],
+[2,"What are your plans for next weekend?","¿Qué planes tienes para el próximo fin de semana?"],
+[2,"Tell me about a person you admire.","Háblame de una persona que admiras."],
+[2,"What do you like and dislike about your city?","¿Qué te gusta y qué no de tu ciudad?"],
+[3,"Do you think technology makes people happier? Why?","¿Crees que la tecnología hace más feliz a la gente? ¿Por qué?"],
+[3,"What is a skill you would like to learn and why?","¿Qué habilidad te gustaría aprender y por qué?"],
+[3,"Describe a difficult situation you solved.","Describe una situación difícil que resolviste."],
+[3,"Where do you see yourself in five years?","¿Dónde te ves en cinco años?"],
+[3,"What advice would you give to someone learning English?","¿Qué consejo le darías a alguien que aprende inglés?"]
+];
+
+// Lecturas: [nivel, título, texto, traducción, [[pregunta, [opciones], índice correcto], ...]]
+const READINGS = [
+[1,"My Morning","My name is Laura. I get up at six o'clock every day. First, I take a shower. Then I drink a cup of coffee and eat bread with cheese. I take the bus to work at seven. I work in an office in the city center. I love my job because my coworkers are very friendly.",
+"Me llamo Laura. Me levanto a las seis todos los días. Primero me ducho. Luego tomo una taza de café y como pan con queso. Tomo el bus al trabajo a las siete. Trabajo en una oficina en el centro. Me encanta mi trabajo porque mis compañeros son muy amables.",
+[["What time does Laura get up?",["At seven","At six","At eight"],1],["How does she go to work?",["By bus","By car","She walks"],0],["Why does she love her job?",["The money is good","The office is big","Her coworkers are friendly"],2]]],
+[1,"At the Restaurant","Tom and his sister go to an Italian restaurant on Saturday. Tom orders a pizza and a lemonade. His sister orders pasta with tomato sauce and a glass of water. The food is delicious, but the restaurant is very noisy. They pay forty dollars in total.",
+"Tom y su hermana van a un restaurante italiano el sábado. Tom pide una pizza y una limonada. Su hermana pide pasta con salsa de tomate y un vaso de agua. La comida es deliciosa, pero el restaurante es muy ruidoso. Pagan cuarenta dólares en total.",
+[["What does Tom drink?",["Water","Lemonade","Coffee"],1],["What is the problem with the restaurant?",["It is expensive","It is noisy","The food is bad"],1],["How much do they pay?",["Fourteen dollars","Forty dollars","Four dollars"],1]]],
+[1,"My Pet","I have a small dog. His name is Max. He is brown and white. Max likes to play in the park and run after balls. He sleeps a lot in the afternoon. Every evening, I take him for a walk around my neighborhood.",
+"Tengo un perro pequeño. Se llama Max. Es café y blanco. A Max le gusta jugar en el parque y correr detrás de pelotas. Duerme mucho en la tarde. Cada noche lo saco a caminar por mi barrio.",
+[["What color is Max?",["Black","Brown and white","Gray"],1],["When does Max sleep a lot?",["In the morning","In the afternoon","At night"],1]]],
+[2,"A Change of Plans","Last weekend, Maria was planning to go to the beach with her friends. However, on Saturday morning it started raining heavily, so they decided to stay in the city. Instead, they went to a museum and then had lunch at a new Mexican restaurant. In the end, Maria said it was one of the best weekends she had had in months.",
+"El fin de semana pasado, María planeaba ir a la playa con sus amigos. Sin embargo, el sábado por la mañana empezó a llover fuerte, así que decidieron quedarse en la ciudad. En cambio, fueron a un museo y luego almorzaron en un restaurante mexicano nuevo. Al final, María dijo que fue uno de los mejores fines de semana en meses.",
+[["Why didn't they go to the beach?",["It was too expensive","It was raining","A friend was sick"],1],["What did they do first?",["They visited a museum","They had lunch","They went shopping"],0],["How did Maria feel about the weekend?",["Disappointed","Bored","Very happy"],2]]],
+[2,"Working from Home","Many people now work from home at least two days a week. They save time because they don't have to travel to the office. On the other hand, some workers say they feel lonely and find it difficult to separate work from their personal life. Experts recommend having a fixed schedule and a special place in the house just for working.",
+"Muchas personas ahora trabajan desde casa al menos dos días a la semana. Ahorran tiempo porque no tienen que viajar a la oficina. Por otro lado, algunos trabajadores dicen que se sienten solos y que les cuesta separar el trabajo de su vida personal. Los expertos recomiendan tener un horario fijo y un lugar especial en la casa solo para trabajar.",
+[["What is one advantage of working from home?",["Saving time","Earning more money","Meeting more people"],0],["What problem do some workers have?",["They feel lonely","They work less","They get sick"],0],["What do experts recommend?",["Working at night","A fixed schedule","Working in bed"],1]]],
+[3,"Learning a Language as an Adult","It is often said that children learn languages more easily than adults. While children may achieve a more natural accent, adults actually have some advantages: they can understand grammar rules, use learning strategies and connect new words to things they already know. Researchers agree that the most important factor is not age but regular exposure. Practicing for fifteen minutes every day is more effective than studying for two hours once a week.",
+"Se suele decir que los niños aprenden idiomas más fácilmente que los adultos. Aunque los niños pueden lograr un acento más natural, los adultos tienen algunas ventajas: entienden reglas gramaticales, usan estrategias de aprendizaje y conectan palabras nuevas con lo que ya saben. Los investigadores coinciden en que el factor más importante no es la edad sino la exposición regular. Practicar quince minutos cada día es más efectivo que estudiar dos horas una vez por semana.",
+[["What advantage do children have?",["Better grammar","A more natural accent","More time"],1],["According to researchers, what matters most?",["Age","Regular exposure","Good teachers"],1],["Which is more effective?",["Two hours once a week","Fifteen minutes every day","Studying only grammar"],1]]],
+[3,"The Secret of Good Sleep","Scientists have found that the quality of our sleep depends largely on our habits during the day. Looking at bright screens late at night can delay the production of melatonin, the hormone that makes us feel sleepy. Drinking coffee after four in the afternoon may also keep us awake longer than we realize. Going to bed and waking up at the same time every day, even on weekends, helps the body regulate its internal clock.",
+"Los científicos han descubierto que la calidad de nuestro sueño depende en gran parte de nuestros hábitos durante el día. Mirar pantallas brillantes tarde en la noche puede retrasar la producción de melatonina, la hormona que nos da sueño. Tomar café después de las cuatro de la tarde también puede mantenernos despiertos más de lo que creemos. Acostarse y levantarse a la misma hora todos los días, incluso los fines de semana, ayuda al cuerpo a regular su reloj interno.",
+[["What does melatonin do?",["Gives us energy","Makes us feel sleepy","Keeps us awake"],1],["What should you avoid after 4 p.m.?",["Water","Exercise","Coffee"],2],["What helps the internal clock?",["Sleeping late on weekends","A regular sleep schedule","Watching TV in bed"],1]]]
+];
+// Escritura libre: [nivel, instrucción en español, palabras mínimas]
+const WRITE_TOPICS = [
+[1,"Escribe 3 frases sobre lo que hiciste hoy.",15],
+[1,"Describe a una persona de tu familia (cómo es, qué le gusta).",15],
+[1,"Escribe qué comiste ayer y qué te gusta comer.",15],
+[1,"Describe tu habitación.",15],
+[2,"Escribe un mensaje a un amigo invitándolo a un plan este fin de semana.",30],
+[2,"Cuenta un viaje o un paseo que recuerdes con cariño.",30],
+[2,"¿Por qué quieres aprender inglés? Explica tus razones.",30],
+[3,"¿Qué ventajas y desventajas tienen las redes sociales? Da tu opinión.",50],
+[3,"Escribe un correo formal pidiendo información sobre un curso.",50]
+];
+
+// ---------- Estado ----------
+const KEY="dailyEnglish.v1";
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const dayKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{}};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+
+function countToday(){return S.days[today()]||0}
+function streak(){
+  let n=0,d=new Date();
+  if((S.days[dayKey(d)]||0)<S.goal) d.setDate(d.getDate()-1); // hoy aún no cuenta si no está completo
+  while((S.days[dayKey(d)]||0)>=S.goal){n++;d.setDate(d.getDate()-1)}
+  return n;
+}
+function addDone(type){
+  const before=countToday();
+  S.days[today()]=before+1;
+  S.total[type]=(S.total[type]||0)+1;
+  const st=streak(); if(st>S.best) S.best=st;
+  save(); renderHome();
+  if(before+1===S.goal){celebrate()}
+  if(daily.active){daily.left--; if(daily.left<=0){daily.active=false;setTimeout(()=>show("home"),900)}}
+}
+function celebrate(){
+  speak("Great job! You completed your daily goal.",1);
+  const b=$("banner"); b.classList.remove("hide");
+  b.innerHTML="🎉 <b>¡Meta cumplida!</b> Tu racha es de "+streak()+" día(s). Vuelve mañana para no perderla.";
+  if(navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+
+// ---------- Voz ----------
+let voices=[];
+function loadVoices(){voices=speechSynthesis.getVoices()}
+if("speechSynthesis" in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function pickVoice(){
+  const v=voices.filter(v=>v.lang&&v.lang.replace("_","-").startsWith(S.accent));
+  return v.find(x=>/google/i.test(x.name))||v[0]||voices.find(x=>/^en/i.test(x.lang));
+}
+function speak(text,rate){
+  if(!("speechSynthesis" in window)){alert("Tu navegador no puede leer en voz alta.");return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=S.accent;u.rate=rate||0.95;const v=pickVoice();if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function listen(onResult,onEnd,btn){
+  if(!SR){$("noSR").classList.remove("hide");return null}
+  const r=new SR();r.lang=S.accent;r.interimResults=false;r.maxAlternatives=3;
+  r.onresult=e=>{const alts=[...e.results[0]].map(a=>a.transcript);onResult(alts)};
+  r.onerror=e=>{onEnd(e.error)};
+  r.onend=()=>{btn.classList.remove("on");onEnd()};
+  btn.classList.add("on");speechSynthesis.cancel();
+  try{r.start()}catch(e){btn.classList.remove("on")}
+  return r;
+}
+
+// ---------- Comparar texto ----------
+const norm=s=>s.toLowerCase().replace(/’/g,"'").replace(/[^a-z0-9' ]+/g," ")
+  .replace(/\b(i'm)\b/g,"i am").replace(/\b(don't)\b/g,"do not").replace(/\b(didn't)\b/g,"did not")
+  .replace(/\b(can't)\b/g,"cannot").replace(/\b(it's)\b/g,"it is").replace(/\b(let's)\b/g,"let us")
+  .replace(/\b(i'd)\b/g,"i would").replace(/\b(i've)\b/g,"i have").replace(/\b(we're)\b/g,"we are")
+  .replace(/\b(you're)\b/g,"you are").replace(/\b(o'clock)\b/g,"oclock")
+  .replace(/\bsix\b/g,"6").replace(/\btwo\b/g,"2").replace(/\bone\b/g,"1").replace(/\bfive\b/g,"5")
+  .split(/\s+/).filter(Boolean);
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=[...Array(n+1).keys()];for(let i=1;i<=m;i++){let c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+function compare(target,said){
+  const t=norm(target),s=norm(said);
+  const used=new Array(s.length).fill(false);
+  const marks=t.map(w=>{
+    for(let k=0;k<s.length;k++){if(!used[k]&&(s[k]===w||(w.length>4&&lev(s[k],w)<=1))){used[k]=true;return true}}
+    return false});
+  const ok=marks.filter(Boolean).length;
+  return {score:Math.round(ok/t.length*100),marks};
+}
+function wordsHTML(target,marks){
+  const raw=target.split(/\s+/);let i=0;
+  // alinear palabras visibles con las normalizadas (aprox. 1 a 1)
+  return raw.map(w=>{const m=marks[Math.min(i++,marks.length-1)];return `<span class="w ${m?"ok":"miss"}">${w}</span>`}).join(" ");
+}
+
+// ---------- Elegir frases (repite las que fallaste) ----------
+function pick(list,lastText){
+  const pool=list.filter(p=>p[0]<=S.level&&p[1]!==lastText);
+  const weighted=[];
+  pool.forEach(p=>{const w=1+(p[0]===S.level?2:0)+Math.min(3,S.weak[p[1]]||0);for(let i=0;i<w;i++)weighted.push(p)});
+  return weighted[Math.floor(Math.random()*weighted.length)];
+}
+const lvlName=l=>["","Básico","Intermedio","Avanzado"][l];
+
+// ---------- Escuchar ----------
+let L=null,lDone=false;
+function newListen(){
+  L=pick(PHRASES,L&&L[1]);lDone=false;
+  $("lTag").textContent=lvlName(L[0]);$("lInput").value="";$("lFb").innerHTML="";
+  $("lNext").classList.add("hide");$("lCheck").classList.remove("hide");
+  setTimeout(()=>speak(L[1]),300);
+}
+$("lPlay").onclick=()=>speak(L[1]);
+$("lSlow").onclick=()=>speak(L[1],0.6);
+$("lCheck").onclick=()=>{
+  const v=$("lInput").value.trim();if(!v){$("lInput").focus();return}
+  const r=compare(L[1],v);const good=r.score>=80;
+  $("lFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Muy bien! 👏":"Casi... sigue intentando 💪"}</b> (${r.score}%)<br>${wordsHTML(L[1],r.marks)}<div class="es" style="margin-top:6px">${L[2]}</div></div>`;
+  if(good){S.weak[L[1]]=0}else{S.weak[L[1]]=(S.weak[L[1]]||0)+1}
+  if(!lDone){lDone=true;addDone("listen")}
+  $("lNext").classList.remove("hide");save();
+};
+$("lShow").onclick=()=>{$("lFb").innerHTML=`<div class="fb bad"><b>Respuesta:</b> ${L[1]}<div class="es">${L[2]}</div><div class="sub">Escúchala otra vez y escríbela tú misma.</div></div>`;S.weak[L[1]]=(S.weak[L[1]]||0)+1;save()};
+$("lNext").onclick=()=>daily.active?nextDaily():newListen();
+$("lInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("lCheck").click()}});
+
+// ---------- Hablar ----------
+let P=null,sDone=false,tries=0;
+function newSpeak(){
+  P=pick(PHRASES,P&&P[1]);sDone=false;tries=0;
+  $("sTag").textContent=lvlName(P[0]);$("sPhrase").textContent=P[1];$("sEs").textContent=P[2];
+  $("sFb").innerHTML="";$("sNext").classList.add("hide");$("sHint").textContent="Toca el micrófono y di la frase";
+  if(!SR)$("noSR").classList.remove("hide");
+}
+$("sModel").onclick=()=>speak(P[1]);
+$("sModelSlow").onclick=()=>speak(P[1],0.6);
+$("sMic").onclick=()=>{
+  $("sHint").textContent="Te estoy escuchando...";
+  listen(alts=>{
+    let best={score:-1};alts.forEach(a=>{const r=compare(P[1],a);if(r.score>best.score)best={...r,said:a}});
+    tries++;const good=best.score>=80;
+    $("sFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Excelente pronunciación! 🎉":best.score>=50?"¡Vas bien! Repite las palabras en rojo 🔁":"Inténtalo otra vez, más despacio 🙂"}</b> (${best.score}%)<br>${wordsHTML(P[1],best.marks)}<div class="sub" style="margin-top:6px">Entendí: “${best.said}”</div></div>`;
+    if(good||tries>=3){ if(!sDone){sDone=true;addDone("speak")} $("sNext").classList.remove("hide")}
+    S.weak[P[1]]=good?0:(S.weak[P[1]]||0)+1;save();
+  },err=>{
+    if(err==="not-allowed")$("sHint").textContent="Debes permitir el micrófono para este ejercicio.";
+    else if(err==="no-speech")$("sHint").textContent="No te escuché. Toca el micrófono otra vez.";
+    else if(!err)$("sHint").textContent=sDone?"Puedes seguir practicando o pasar a la siguiente.":"Toca el micrófono para intentarlo de nuevo";
+  },$("sMic"));
+};
+$("sNext").onclick=()=>daily.active?nextDaily():newSpeak();
+$("sSkip").onclick=()=>newSpeak();
+$("goTalk").onclick=()=>show("talk");
+$("gearBtn").onclick=()=>{daily.active=false;show("set")};
+
+// ---------- Conversar ----------
+let Q=null,tDone=false;
+function newTalk(){
+  Q=pick(QUESTIONS,Q&&Q[1]);tDone=false;
+  $("tQ").textContent=Q[1];$("tEs").textContent=Q[2];$("tFb").innerHTML="";$("tNext").classList.add("hide");
+  $("tHint").textContent="Toca el micrófono y responde (mínimo 5 palabras)";
+  setTimeout(()=>speak(Q[1]),300);
+}
+$("tPlay").onclick=()=>speak(Q[1]);
+$("tSkip").onclick=()=>newTalk();
+$("tMic").onclick=()=>{
+  $("tHint").textContent="Te estoy escuchando... habla con calma";
+  listen(alts=>{
+    const said=alts[0];const n=norm(said).length;const good=n>=5;
+    $("tFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Bien hecho! Dijiste "+n+" palabras 👏":"Respuesta muy corta ("+n+" palabras). Intenta decir una frase más larga."}</b><div style="margin-top:6px">Entendí: “${said}”</div><div class="sub" style="margin-top:6px">Si lo que entendí no es lo que dijiste, repite más despacio las palabras que cambiaron.</div></div>`;
+    if(good&&!tDone){tDone=true;addDone("talk");$("tNext").classList.remove("hide")}
+  },err=>{
+    if(err==="not-allowed")$("tHint").textContent="Debes permitir el micrófono para este ejercicio.";
+    else if(err==="no-speech")$("tHint").textContent="No te escuché. Toca el micrófono otra vez.";
+  },$("tMic"));
+};
+$("tNext").onclick=()=>daily.active?nextDaily():newTalk();
+
+// ---------- Leer ----------
+let R=null,rDone=false;
+function newRead(){
+  const pool=READINGS.filter(r=>r[0]<=S.level&&r!==R);
+  const lvl=pool.filter(r=>r[0]===S.level);
+  const src=(lvl.length&&Math.random()<.7)?lvl:pool;
+  R=src[Math.floor(Math.random()*src.length)];rDone=false;
+  $("rTag").textContent=lvlName(R[0]);$("rTitle").textContent=R[1];$("rText").textContent=R[2];
+  $("rEs").textContent=R[3];$("rEs").classList.add("hide");$("rFb").innerHTML="";
+  $("rNext").classList.add("hide");$("rCheck").classList.remove("hide");
+  $("rQs").innerHTML=R[4].map((q,i)=>`<div class="card" style="margin:10px 0;padding:14px"><b>${i+1}. ${q[0]}</b>${q[1].map((o,j)=>`<label style="font-weight:400;display:flex;gap:10px;align-items:center;padding:8px 0"><input type="radio" name="rq${i}" value="${j}" style="width:22px;height:22px"> ${o}</label>`).join("")}</div>`).join("");
+}
+$("rPlay").onclick=()=>speak(R[2],0.9);
+$("rTr").onclick=()=>$("rEs").classList.toggle("hide");
+$("rCheck").onclick=()=>{
+  let ok=0;R[4].forEach((q,i)=>{const s=document.querySelector(`input[name=rq${i}]:checked`);
+    const box=document.getElementsByName("rq"+i)[0].closest(".card");
+    const right=s&&+s.value===q[2];if(right)ok++;
+    box.style.borderColor=right?"var(--ok)":"var(--bad)";
+    if(!right)box.insertAdjacentHTML("beforeend",`<div class="sub">Respuesta correcta: <b>${q[1][q[2]]}</b></div>`)});
+  const n=R[4].length;
+  $("rFb").innerHTML=`<div class="fb ${ok===n?"ok":"bad"}"><b>${ok===n?"¡Perfecto! 🎉":"Acertaste "+ok+" de "+n+". Vuelve a leer la parte que fallaste 🔍"}</b></div>`;
+  if(!rDone){rDone=true;addDone("read")}
+  $("rCheck").classList.add("hide");$("rNext").classList.remove("hide");
+};
+$("rNext").onclick=()=>daily.active?nextDaily():newRead();
+
+// ---------- Escribir ----------
+// Alterna: traducir una frase del español, o escribir libremente sobre un tema.
+let W=null,wDone=false;
+function newWrite(){
+  wDone=false;$("wInput").value="";$("wFb").innerHTML="";$("wNext").classList.add("hide");$("wCheck").classList.remove("hide");
+  if(Math.random()<.6){
+    const p=pick(PHRASES,W&&W.en);W={type:"tr",en:p[1],es:p[2],lvl:p[0]};
+    $("wInstr").textContent="Traduce esta frase al inglés:";$("wPrompt").textContent=p[2];$("wInput").style.minHeight="80px";
+  }else{
+    const pool=WRITE_TOPICS.filter(t=>t[0]<=S.level);const t=pool[Math.floor(Math.random()*pool.length)];
+    W={type:"free",es:t[1],min:t[2],lvl:t[0]};
+    $("wInstr").textContent=`Escritura libre (mínimo ${t[2]} palabras). Escribe con tus palabras, no importa si cometes errores.`;
+    $("wPrompt").textContent=t[1];$("wInput").style.minHeight="180px";
+  }
+  $("wTag").textContent=lvlName(W.lvl);
+}
+$("wSkip").onclick=()=>newWrite();
+$("wCheck").onclick=()=>{
+  const v=$("wInput").value.trim();if(!v){$("wInput").focus();return}
+  if(W.type==="tr"){
+    const r=compare(W.en,v);const good=r.score>=75;
+    $("wFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Muy bien! 👏":"Compara tu frase con esta 👇"}</b> (${r.score}% de palabras)<br>Una forma correcta: ${wordsHTML(W.en,r.marks)}<div class="sub" style="margin-top:6px">Puede haber otras formas correctas. Las palabras en rojo no aparecen en tu frase.</div></div>`;
+    S.weak[W.en]=good?0:(S.weak[W.en]||0)+1;
+    if(!good){$("wFb").insertAdjacentHTML("beforeend",'<div class="sub" id="ltBox">🌐 Revisando tu gramática...</div>');grammarCheck(v).then(m=>{const b=$("ltBox");if(b)b.outerHTML=ltHTML(v,m)})}
+    if(!wDone){wDone=true;addDone("write")}
+    $("wCheck").classList.add("hide");$("wNext").classList.remove("hide");
+  }else{
+    const words=v.split(/\s+/).filter(Boolean);const n=words.length;
+    const tips=[];
+    if(!/^[A-Z]/.test(v))tips.push("Empieza con mayúscula.");
+    if(/\bi\b/.test(v))tips.push("La palabra «I» (yo) siempre va en mayúscula.");
+    if(!/[.!?]\s*$/.test(v))tips.push("Termina con un punto.");
+    if(/[áéíóúñ¿¡]/i.test(v))tips.push("Parece que hay letras o palabras en español.");
+    const uniq=new Set(words.map(w=>w.toLowerCase())).size;
+    if(n>=10&&uniq/n<.5)tips.push("Intenta usar palabras más variadas.");
+    const good=n>=W.min;
+    $("wFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Bien hecho! Escribiste "+n+" palabras ✍️":"Llevas "+n+" de "+W.min+" palabras. ¡Sigue escribiendo!"}</b>${tips.length?"<ul style='margin:6px 0 0 18px;padding:0'>"+tips.map(t=>"<li>"+t+"</li>").join("")+"</ul>":""}<div class="sub" style="margin-top:6px">Truco: toca 🔊 para escuchar tu texto y notar errores.</div><button class="sec" style="margin-top:8px" onclick="speak(document.getElementById('wInput').value,0.9)">🔊 Escuchar mi texto</button></div>`;
+    $("wFb").insertAdjacentHTML("beforeend",'<div class="sub" id="ltBox">🌐 Revisando tu gramática...</div>');grammarCheck(v).then(m=>{const b=$("ltBox");if(b)b.outerHTML=ltHTML(v,m)});
+    if(good){if(!wDone){wDone=true;addDone("write")}$("wCheck").classList.add("hide");$("wNext").classList.remove("hide")}
+  }
+  save();
+};
+$("wNext").onclick=()=>daily.active?nextDaily():newWrite();
+
+// ---------- Examen B1 ----------
+const DAY=86400000;
+function dateOnly(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function daysToExam(){if(!S.exam)return null;const t=dateOnly(today());return Math.round((dateOnly(S.exam)-t)/DAY)}
+function topicScore(id){return S.gScore[id]??null}
+function pendingTopics(){return GRAMMAR.filter(g=>(topicScore(g.id)??0)<80)}
+function plan(){
+  // reparte los temas que faltan (menos de 80%) en los días que quedan, dejando el día antes del examen para simulacro
+  const left=daysToExam();const pend=pendingTopics();
+  const studyDays=left===null?7:Math.max(1,left-1);
+  const perDay=Math.ceil(pend.length/studyDays)||0;
+  const days=[];for(let i=0;i<studyDays&&i*perDay<pend.length;i++)days.push(pend.slice(i*perDay,(i+1)*perDay));
+  return {left,perDay,days,today:days[0]||[]};
+}
+function pillFor(id){const s=topicScore(id);if(s===null)return `<span class="pill">sin hacer</span>`;return `<span class="pill ${s>=80?"good":s>=50?"mid":""}">${s}%</span>`}
+function topicRow(g){return `<div class="topic"><div><b>${g.t}</b><div class="sub es">${g.es}</div></div><div class="row">${pillFor(g.id)}<button class="sec" style="min-height:40px;padding:8px 14px" onclick="openTopic('${g.id}')">Estudiar</button></div></div>`}
+function renderB1(){
+  $("b1Home").classList.remove("hide");$("b1Topic").classList.add("hide");
+  $("examDate").value=S.exam||"";
+  const p=plan();const left=p.left;
+  const avg=b1Avg();
+  $("examInfo").innerHTML=(left===null?"Pon la fecha de tu examen para armar tu plan.":left<0?"La fecha del examen ya pasó. Pon una nueva si vas a presentarlo otra vez.":left===0?"<b>¡Hoy es tu examen! Mucha suerte 🍀</b> Haz un repaso rápido de tus errores.":`Faltan <b>${left} día(s)</b>. Tu dominio promedio de los temas: <b>${avg}%</b>. Meta: 80% o más en cada tema.`);
+  if(left===1||(p.today.length===0&&GRAMMAR.length)){
+    $("planToday").innerHTML=p.today.length?p.today.map(topicRow).join(""):`<p>✅ ¡Ya dominas todos los temas! Hoy haz el <b>simulacro</b> y repasa tus errores.</p>`;
+    if(left===1)$("planToday").insertAdjacentHTML("afterbegin",`<p class="banner">Mañana es el examen: hoy haz el simulacro completo y repasa tus errores.</p>`);
+  } else $("planToday").innerHTML=p.today.map(topicRow).join("");
+  const done=GRAMMAR.filter(g=>(topicScore(g.id)??0)>=80);
+  $("planAll").innerHTML=p.days.map((d,i)=>`<h3 style="margin:12px 0 4px">Día ${i+1}${i===0?" (hoy)":""}</h3>`+d.map(topicRow).join("")).join("")+
+    (done.length?`<h3 style="margin:12px 0 4px">✅ Temas dominados</h3>`+done.map(topicRow).join(""):"")+
+    `<p class="sub">El plan se ajusta solo: los temas en los que sacas 80% o más pasan a "dominados" y los demás se reparten en los días que quedan.</p>`;
+  $("errBtn").textContent=`📕 Repasar mis errores (${Object.keys(S.errors).length})`;
+}
+$("examDate").onchange=()=>{S.exam=$("examDate").value;save();renderB1()};
+function b1Avg(){return Math.round(GRAMMAR.reduce((a,g)=>a+(topicScore(g.id)??0),0)/GRAMMAR.length)}
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+function openTopic(id){
+  const g=GRAMMAR.find(x=>x.id===id);
+  $("b1Home").classList.add("hide");$("b1Topic").classList.remove("hide");
+  $("gTitle").textContent=g.t;$("gEs").textContent=g.es;$("gExp").innerHTML=g.exp;
+  $("gEx").innerHTML="<h3 style='margin:12px 0 4px'>Ejemplos</h3>"+g.ex.map(e=>`<div class="row" style="padding:4px 0"><button class="ghost" onclick="speak(this.nextElementSibling.textContent)">🔊</button><span>${e}</span></div>`).join("");
+  $("gLink").href=g.url;
+  runQuiz(g.q.map((q,i)=>({q,tid:g.id,qi:i})),"Practica: "+g.t,res=>{
+    const pct=Math.round(res.ok/res.n*100);S.gScore[g.id]=Math.max(pct,topicScore(g.id)??0);save();
+    checkEnglishMode();addDone("b1");
+    return pct>=80?`¡Dominas este tema! (${pct}%) 🎉`:`Sacaste ${pct}%. Lee otra vez la explicación de arriba y repite el ejercicio hasta llegar a 80%.`;
+  },()=>openTopic(id));
+  window.scrollTo(0,0);
+}
+$("b1Back").onclick=()=>renderB1();
+
+// Motor de preguntas: una por una, con explicación inmediata
+function runQuiz(items,title,onDone,again){
+  let i=0,ok=0;const wrongTopics={};const box=$("gQuiz");
+  function q(){
+    if(i>=items.length){
+      const msg=onDone({ok,n:items.length,wrongTopics});
+      const weak=Object.keys(wrongTopics).map(id=>GRAMMAR.find(g=>g.id===id));
+      box.innerHTML=`<h2>Resultado: ${ok} de ${items.length}</h2><p>${msg}</p>`+
+        (weak.length>1?`<h3>Temas para reforzar</h3>`+weak.map(topicRow).join(""):"")+
+        `<div class="row" style="margin-top:10px"><button id="qAgain">🔁 Repetir</button><button class="sec" id="qBack">Volver al plan</button>${daily.active?'<button id="qNext">Siguiente ➡️</button>':""}</div>`;
+      $("qAgain").onclick=again;$("qBack").onclick=()=>{renderB1();window.scrollTo(0,0)};
+      if(daily.active)$("qNext").onclick=()=>nextDaily();
+      return;
+    }
+    const it=items[i];const [sent,opts,correct,why]=it.q;
+    const order=shuffle(opts.map((o,k)=>k));
+    const g=GRAMMAR.find(x=>x.id===it.tid);
+    box.innerHTML=`<div class="sub">${title} · pregunta ${i+1} de ${items.length}${items.length>5?" · tema: "+g.t:""}</div>
+      <div class="phrase" style="font-size:21px">${esc(sent).replace("___","<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>")}</div>
+      <div id="qOpts">${order.map(k=>`<button class="opt" data-k="${k}">${esc(opts[k])}</button>`).join("")}</div><div id="qFb"></div>`;
+    box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+      const k=+b.dataset.k;const right=k===correct;const key=it.tid+":"+it.qi;
+      box.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.k===correct)x.classList.add("right")});
+      if(!right)b.classList.add("wrong");
+      if(right){ok++;delete S.errors[key]}else{S.errors[key]=(S.errors[key]||0)+1;wrongTopics[it.tid]=1}
+      save();
+      const full=sent.replace("___",opts[correct]);
+      $("qFb").innerHTML=`<div class="fb ${right?"ok":"bad"}"><b>${right?"✅ ¡Correcto!":"❌ Te equivocaste. La respuesta es: "+esc(opts[correct])}</b><div style="margin-top:6px">💡 ${why}</div>
+        <div class="row" style="margin-top:6px"><button class="ghost" onclick="speak(${JSON.stringify(full).replace(/"/g,"&quot;")})">🔊 Escuchar la frase correcta</button></div></div>
+        <button style="margin-top:10px" id="qGo">${i+1<items.length?"Siguiente pregunta ➡️":"Ver resultado"}</button>`;
+      $("qGo").onclick=()=>{i++;q()};
+    });
+  }
+  q();
+}
+$("mockBtn").onclick=()=>{
+  const all=[];GRAMMAR.forEach(g=>g.q.forEach((q,i)=>all.push({q,tid:g.id,qi:i})));
+  // al menos una pregunta de cada tema + el resto al azar
+  const picked=GRAMMAR.map(g=>{const i=Math.floor(Math.random()*g.q.length);return {q:g.q[i],tid:g.id,qi:i}});
+  const rest=shuffle(all.filter(x=>!picked.some(p=>p.tid===x.tid&&p.qi===x.qi))).slice(0,30-picked.length);
+  const items=shuffle(picked.concat(rest));
+  $("b1Home").classList.add("hide");$("b1Topic").classList.remove("hide");
+  $("gTitle").textContent="Simulacro de examen B1";$("gEs").textContent="30 preguntas de todos los temas";
+  $("gExp").innerHTML="<p>Responde sin mirar las explicaciones. Al final verás tu nota y qué temas debes reforzar.</p>";$("gEx").innerHTML="";$("gLink").removeAttribute("href");
+  runQuiz(items,"Simulacro",res=>{
+    const pct=Math.round(res.ok/res.n*100);S.mocks.push({d:today(),pct});save();addDone("b1");
+    return `Tu nota: <b>${pct}%</b>. ${pct>=80?"¡Estás lista para el examen! 💪":pct>=60?"Vas bien, refuerza los temas de abajo.":"Sigue el plan diario y repite el simulacro en unos días."}`+(S.mocks.length>1?`<br><span class="sub">Simulacros anteriores: ${S.mocks.slice(-6,-1).map(m=>m.pct+"%").join(", ")}</span>`:"");
+  },()=>$("mockBtn").click());
+  window.scrollTo(0,0);
+};
+$("errBtn").onclick=()=>{
+  const items=Object.keys(S.errors).map(k=>{const [tid,qi]=k.split(":");const g=GRAMMAR.find(x=>x.id===tid);return g&&g.q[+qi]?{q:g.q[+qi],tid,qi:+qi}:null}).filter(Boolean);
+  if(!items.length){alert("¡No tienes errores pendientes! 🎉");return}
+  $("b1Home").classList.add("hide");$("b1Topic").classList.remove("hide");
+  $("gTitle").textContent="Repaso de mis errores";$("gEs").textContent="Las preguntas que respondiste mal. Si aciertas, salen de la lista.";
+  $("gExp").innerHTML="";$("gEx").innerHTML="";$("gLink").removeAttribute("href");
+  runQuiz(shuffle(items).slice(0,15),"Mis errores",res=>`Corregiste ${res.ok} de ${res.n}. Te quedan ${Object.keys(S.errors).length} errores por repasar.`,()=>$("errBtn").click());
+};
+function checkEnglishMode(){
+  if(!S.engAuto&&b1Avg()>=85){S.engAuto=true;S.engOnly=true;S.level=3;save();applyEng();
+    alert("🎉 Your average is 85% or more! From now on the app will show English only. You can change this in Ajustes.")}
+}
+function applyEng(){document.body.classList.toggle("eng",!!S.engOnly)}
+
+// ---------- Corrector gratuito por internet (LanguageTool) ----------
+async function grammarCheck(text){
+  try{
+    const r=await fetch("https://api.languagetool.org/v2/check",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:new URLSearchParams({text,language:S.accent,motherTongue:"es"})});
+    if(!r.ok)throw 0;const j=await r.json();return j.matches||[];
+  }catch(e){return null}
+}
+function ltHTML(text,matches){
+  if(matches===null)return `<div class="sub" style="margin-top:8px">📴 Sin internet no pude revisar la gramática en detalle.</div>`;
+  if(!matches.length)return `<div style="margin-top:8px">🌐 Revisión de gramática por internet: <b>no encontré errores</b>. 👏</div>`;
+  return `<div style="margin-top:8px"><b>🌐 Revisión de gramática (${matches.length} ${matches.length===1?"posible error":"posibles errores"}):</b><ol style="margin:6px 0 0 18px;padding:0">`+
+    matches.slice(0,8).map(m=>{const bad=text.substr(m.offset,m.length);const fix=(m.replacements||[]).slice(0,3).map(x=>x.value).join(" / ");
+      return `<li style="margin:6px 0"><span class="w miss">${esc(bad)}</span>${fix?` → <span class="w ok">${esc(fix)}</span>`:""}<div class="sub">${esc(m.message)}</div></li>`}).join("")+
+    `</ol><div class="sub">Las explicaciones de esta revisión vienen en inglés. Si no entiendes una, busca el tema en la sección 🎓 B1.</div></div>`;
+}
+
+// ---------- Práctica diaria guiada ----------
+const daily={active:false,left:0,i:0};
+function nextDaily(){
+  const order=["b1","listen","speak","read","write","b1","talk","listen"];
+  const v=order[daily.i++%order.length];
+  if(v==="b1"){const t=plan().today;show("b1");if(t.length)openTopic(t[(daily.i>>2)%t.length].id);else $("mockBtn").click();return}
+  show(v);
+}
+$("startDaily").onclick=()=>{
+  const left=Math.max(S.goal-countToday(),0);
+  daily.active=true;daily.left=left>0?left:5;daily.i=0;nextDaily();
+};
+
+// ---------- Navegación ----------
+function show(v){
+  ["home","b1","listen","speak","talk","read","write","set"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==v));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("act",b.dataset.v===v));
+  if(v==="listen")newListen(); if(v==="speak")newSpeak(); if(v==="talk")newTalk();
+  if(v==="read")newRead(); if(v==="write")newWrite(); if(v==="b1")renderB1();
+  if(v==="home")renderHome(); if(v==="set")renderSet();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{daily.active=false;show(b.dataset.v)});
+
+// ---------- Inicio ----------
+function renderHome(){
+  const c=countToday(),st=streak();
+  $("sStreak").textContent=st;$("sToday").textContent=c;$("sBest").textContent=Math.max(S.best,st);
+  $("goalBar").style.width=Math.min(100,c/S.goal*100)+"%";
+  $("goalTxt").textContent=c>=S.goal?`✅ Meta cumplida: ${c} de ${S.goal} ejercicios.`:`${c} de ${S.goal} ejercicios. Te faltan ${S.goal-c}.`;
+  $("hello").textContent=S.name?`Hola, ${S.name}. ¡A practicar!`:"Speaking, listening, reading, writing y gramática B1";
+  const b=$("banner");
+  if(c<S.goal){
+    const h=new Date().getHours();
+    const msg=st>0?`🔥 Tienes una racha de <b>${st} días</b>. Si no practicas hoy, la pierdes.`:(yesterdayMissed()?"😴 Ayer no practicaste. ¡Hoy empiezas una nueva racha!":"👋 Cumple tu meta de hoy para empezar tu racha.");
+    b.innerHTML=msg+(h>=20?" <b>¡Se acaba el día!</b>":"");b.classList.remove("hide");
+  } else if(!b.innerHTML.includes("Meta cumplida")) b.classList.add("hide");
+  const cal=$("cal");cal.innerHTML="";const d=new Date();d.setDate(d.getDate()-27);
+  for(let i=0;i<28;i++){const k=dayKey(d),n=S.days[k]||0;const el=document.createElement("div");
+    el.textContent=d.getDate();if(n>=S.goal)el.className="done";else if(n>0)el.className="part";
+    if(k===today())el.classList.add("today");cal.appendChild(el);d.setDate(d.getDate()+1)}
+  try{if(navigator.setAppBadge){c<S.goal?navigator.setAppBadge(S.goal-c):navigator.clearAppBadge()}}catch(e){}
+}
+function yesterdayMissed(){const d=new Date();d.setDate(d.getDate()-1);return Object.keys(S.days).length>0&&!(S.days[dayKey(d)]>0)}
+
+// ---------- Ajustes ----------
+function renderSet(){
+  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;
+  const t=S.total;$("totals").textContent=`Has hecho ${t.listen||0} ejercicios de escuchar, ${t.speak||0} de hablar, ${t.talk||0} de conversación, ${t.read||0} de lectura, ${t.write||0} de escritura y ${t.b1||0} de gramática B1. Días practicados: ${Object.keys(S.days).length}.`;
+  notifStatus();
+}
+$("cfgSave").onclick=()=>{
+  S.name=$("cfgName").value.trim();S.level=+$("cfgLevel").value;S.goal=Math.min(60,Math.max(3,+$("cfgGoal").value||10));
+  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;applyEng();save();syncSW();
+  $("cfgSave").textContent="✓ Guardado";setTimeout(()=>$("cfgSave").textContent="Guardar",1500);
+};
+$("exportBtn").onclick=async()=>{const t=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(t);alert("Copia copiada. Pégala en una nota o envíatela por WhatsApp para guardarla.")}catch(e){prompt("Copia este texto y guárdalo:",t)}};
+$("importBtn").onclick=()=>{const t=prompt("Pega aquí tu copia de seguridad:");if(!t)return;try{Object.assign(S,JSON.parse(decodeURIComponent(escape(atob(t.trim())))));save();renderSet();alert("¡Progreso restaurado!")}catch(e){alert("Ese texto no es una copia válida.")}};
+
+// ---------- Recordatorios ----------
+function notifStatus(){
+  const i=$("notifInfo");
+  if(!("Notification" in window)){i.textContent="Este navegador no permite notificaciones. Usa una alarma diaria del reloj de la tablet.";return}
+  i.textContent=Notification.permission==="granted"?`🔔 Notificaciones activas. Si no has cumplido la meta, te avisaremos cerca de las ${S.time} (Android decide el momento exacto). Para no fallar nunca, crea también una alarma diaria en el reloj de la tablet.`:"Activa las notificaciones para que la app te recuerde practicar.";
+}
+$("cfgNotif").onclick=async()=>{
+  if(!("Notification" in window)){notifStatus();return}
+  const p=await Notification.requestPermission();
+  if(p==="granted"){
+    const reg=await navigator.serviceWorker?.ready;
+    try{if(reg&&"periodicSync" in reg){await reg.periodicSync.register("daily-reminder",{minInterval:60*60*1000})}}catch(e){}
+    syncSW();
+    reg?.showNotification("Daily English 🔔",{body:"¡Listo! Así te recordaremos practicar cada día.",icon:"icon-192.png"});
+  }
+  notifStatus();
+};
+function syncSW(){
+  // guarda en caché lo que el service worker necesita saber para avisar
+  if(!("caches" in window))return;
+  caches.open("de-state").then(c=>c.put("state.json",new Response(JSON.stringify({time:S.time,goal:S.goal,done:countToday(),day:today(),streak:streak()}))));
+}
+
+// ---------- Arranque ----------
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)renderHome()});
+const _addDone=addDone;addDone=t=>{_addDone(t);syncSW()};
+applyEng();renderHome();syncSW();
+</script>
+</body>
+</html>
