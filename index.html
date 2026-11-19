@@ -4,15 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Daily English</title>
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#111111">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--ink:#1c2333;--muted:#6b7385;--pri:#2563eb;--pri2:#dbe6ff;--ok:#16a34a;--okbg:#dcfce7;--bad:#dc2626;--badbg:#fee2e2;--warn:#f59e0b;--line:#e4e7ef}
-@media (prefers-color-scheme:dark){:root{--bg:#10141c;--card:#1a2030;--ink:#eef1f7;--muted:#9aa3b5;--pri:#5b8cff;--pri2:#243461;--okbg:#14321f;--badbg:#3a1717;--line:#2b3347}}
+:root{--bg:#f4f5f0;--card:#fff;--ink:#111;--muted:#5d625a;--pri:#2a9d45;--pri2:#dcf3e1;--org:#f7871e;--orgbg:#fff0e0;--ok:#1f8a3c;--okbg:#e2f6e6;--bad:#d9480f;--badbg:#ffe8d9;--warn:#f7871e;--line:#e2e4dc}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0d0d;--card:#191919;--ink:#f3f3f3;--muted:#a3a79f;--pri:#3db456;--pri2:#1f3a25;--orgbg:#3a2410;--ok:#5fd27a;--okbg:#16301c;--bad:#ff8a4c;--badbg:#3a1f12;--line:#2c2c2c}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
-header{padding:20px 16px 8px;max-width:760px;margin:auto}
+header{background:#111;color:#fff;padding:14px 16px 12px}
+header>*{max-width:760px;margin-left:auto;margin-right:auto}
+header .sub{color:#c9ccc4}
+header h1{display:flex;align-items:center;gap:8px}
+header h1 img{width:40px;height:40px}
+#gearBtn{background:var(--org)!important;color:#111!important}
 h1{font-size:24px;margin:0}
 h2{font-size:20px;margin:0 0 10px}
 .sub{color:var(--muted);font-size:15px}
@@ -35,12 +40,25 @@ button.big{width:100%;font-size:19px;padding:18px}
 .es{color:var(--muted);font-size:16px}
 textarea,select,input[type=number],input[type=time]{font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 textarea{min-height:80px}
-.fb{border-radius:14px;padding:12px;margin-top:12px}
+.fb{border-radius:16px;padding:12px;margin:14px 0 0 72px;position:relative;min-height:64px}
+.fb::before{content:"";position:absolute;left:-74px;top:-4px;width:64px;height:64px;background:url(iguana.svg) center/contain no-repeat}
+.fb.bad::before{background-image:url(iguana-sad.svg)}
+.fb::after{content:"";position:absolute;left:-10px;top:18px;border:6px solid transparent;border-right:10px solid var(--okbg);border-left:0}
+.fb.bad::after{border-right-color:var(--badbg)}
+.fb.ok{border:2px solid var(--ok)} .fb.bad{border:2px solid var(--bad)}
+.fb.ok::after{border-right-color:var(--ok)} .fb.bad::after{border-right-color:var(--bad)}
+.iggy{display:flex;gap:12px;align-items:flex-start;margin:12px 0}
+.iggy img{width:92px;height:92px;flex:none}
+.iggy .bubble{position:relative;background:var(--card);border:2px solid #111;border-radius:18px;padding:12px 14px;flex:1}
+.iggy .bubble::before{content:"";position:absolute;left:-12px;top:26px;border:8px solid transparent;border-right:12px solid #111;border-left:0}
+@media (prefers-color-scheme:dark){.iggy .bubble{border-color:var(--org)}.iggy .bubble::before{border-right-color:var(--org)}}
+.stat b{color:var(--org)}
+nav button.act{color:var(--pri);font-weight:800}
 .fb.ok{background:var(--okbg)} .fb.bad{background:var(--badbg)}
 .w{display:inline-block;padding:2px 6px;border-radius:8px;margin:2px}
 .w.ok{background:var(--okbg);color:var(--ok)} .w.miss{background:var(--badbg);color:var(--bad);text-decoration:underline}
 .bar{height:14px;background:var(--line);border-radius:10px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--ok);transition:width .4s}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),var(--org));transition:width .4s}
 nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
 nav button{background:transparent;color:var(--muted);flex:1;min-width:0;padding:6px 0;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px}
 nav button .ic{font-size:22px}
@@ -48,33 +66,33 @@ nav button.act{color:var(--pri)}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cal div{aspect-ratio:1;border-radius:8px;background:var(--line);display:grid;place-items:center;font-size:12px;color:var(--muted)}
 .cal div.done{background:var(--ok);color:#fff}
-.cal div.part{background:var(--warn);color:#fff}
-.cal div.today{outline:2px solid var(--pri)}
-.banner{background:#fff4d6;color:#5a3b00;border-radius:14px;padding:12px 14px;margin:10px 0}
-@media (prefers-color-scheme:dark){.banner{background:#3a2c08;color:#ffe3a3}}
+.cal div.part{background:var(--org);color:#111}
+.cal div.today{outline:2px solid #111}
+.banner{background:var(--orgbg);color:var(--ink);border-left:5px solid var(--org);border-radius:14px;padding:12px 14px;margin:10px 0}
 .hide{display:none!important}
 label{display:block;margin:10px 0 4px;font-weight:600}
 body.eng .es,body.eng #rTr,body.eng .gexp-es{display:none!important}
 .opt{display:block;width:100%;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line);margin:6px 0;font-weight:500}
+.opt:disabled{opacity:1}
 .opt.right{background:var(--okbg);border-color:var(--ok)} .opt.wrong{background:var(--badbg);border-color:var(--bad)}
 .topic{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .topic:last-child{border:0}
 .pill{font-size:13px;border-radius:999px;padding:2px 10px;background:var(--line);white-space:nowrap}
-.pill.good{background:var(--okbg);color:var(--ok)} .pill.mid{background:#fff1c9;color:#8a5a00}
+.pill.good{background:var(--okbg);color:var(--ok)} .pill.mid{background:var(--orgbg);color:var(--bad)}
 a{color:var(--pri)}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
 </head>
 <body>
 <header>
-  <div class="row" style="justify-content:space-between"><h1>🇬🇧 Daily English</h1><button class="sec" id="gearBtn" aria-label="Ajustes" style="min-height:44px;padding:8px 14px">⚙️ Ajustes</button></div>
-  <div class="sub" id="hello">Speaking, listening, reading, writing y gramática B1</div>
+  <div class="row" style="justify-content:space-between"><h1><img src="iguana.svg" alt="">Daily English</h1><button class="sec" id="gearBtn" aria-label="Ajustes" style="min-height:44px;padding:8px 14px">⚙️ Ajustes</button></div>
+  <div class="sub" id="hello">Practica con Iggy la iguana 🦎</div>
 </header>
 <main>
 
 <!-- HOY -->
 <section id="v-home">
-  <div id="banner" class="banner hide"></div>
+  <div class="iggy"><img id="iggyImg" src="iguana.svg" alt="Iggy la iguana"><div class="bubble" id="banner">¡Hola! Soy Iggy 🦎. Vamos a practicar inglés juntas todos los días.</div></div>
   <div class="stats">
     <div class="stat"><b id="sStreak">0</b><span>🔥 días seguidos</span></div>
     <div class="stat"><b id="sToday">0</b><span>ejercicios hoy</span></div>
@@ -250,6 +268,7 @@ a{color:var(--pri)}
     </select>
     <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgEng" style="width:22px;height:22px"> Modo solo inglés (oculta las traducciones al español)</label>
     <p class="sub" style="margin-top:0">Se activa solo cuando tu promedio en los temas B1 llega a 85% o más. Puedes cambiarlo cuando quieras.</p>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgIggy" style="width:22px;height:22px"> 🦎 Iggy me habla (me felicita en inglés)</label>
     <label for="cfgTime">Hora del recordatorio diario</label>
     <input id="cfgTime" type="time">
     <div class="row" style="margin-top:14px">
@@ -428,10 +447,15 @@ function addDone(type){
 }
 function celebrate(){
   speak("Great job! You completed your daily goal.",1);
-  const b=$("banner"); b.classList.remove("hide");
+  const b=$("banner");
   b.innerHTML="🎉 <b>¡Meta cumplida!</b> Tu racha es de "+streak()+" día(s). Vuelve mañana para no perderla.";
   if(navigator.vibrate) navigator.vibrate([100,50,100]);
 }
+
+// ---------- Iggy habla ----------
+const IGGY_OK=["Great job!","Well done!","Excellent!","You got it!","Awesome!","Perfect!"];
+const IGGY_BAD=["Oops! Let's read why.","Don't worry, you're learning!","Almost! Check the explanation.","Nice try! Keep going."];
+function iggySay(ok){if(S.iggyVoice===false)return;const l=ok?IGGY_OK:IGGY_BAD;speak(l[Math.floor(Math.random()*l.length)],1)}
 
 // ---------- Voz ----------
 let voices=[];
@@ -507,7 +531,7 @@ $("lCheck").onclick=()=>{
   const v=$("lInput").value.trim();if(!v){$("lInput").focus();return}
   const r=compare(L[1],v);const good=r.score>=80;
   $("lFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Muy bien! 👏":"Casi... sigue intentando 💪"}</b> (${r.score}%)<br>${wordsHTML(L[1],r.marks)}<div class="es" style="margin-top:6px">${L[2]}</div></div>`;
-  if(good){S.weak[L[1]]=0}else{S.weak[L[1]]=(S.weak[L[1]]||0)+1}
+  iggySay(good);if(good){S.weak[L[1]]=0}else{S.weak[L[1]]=(S.weak[L[1]]||0)+1}
   if(!lDone){lDone=true;addDone("listen")}
   $("lNext").classList.remove("hide");save();
 };
@@ -529,7 +553,7 @@ $("sMic").onclick=()=>{
   $("sHint").textContent="Te estoy escuchando...";
   listen(alts=>{
     let best={score:-1};alts.forEach(a=>{const r=compare(P[1],a);if(r.score>best.score)best={...r,said:a}});
-    tries++;const good=best.score>=80;
+    tries++;const good=best.score>=80;iggySay(good);
     $("sFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Excelente pronunciación! 🎉":best.score>=50?"¡Vas bien! Repite las palabras en rojo 🔁":"Inténtalo otra vez, más despacio 🙂"}</b> (${best.score}%)<br>${wordsHTML(P[1],best.marks)}<div class="sub" style="margin-top:6px">Entendí: “${best.said}”</div></div>`;
     if(good||tries>=3){ if(!sDone){sDone=true;addDone("speak")} $("sNext").classList.remove("hide")}
     S.weak[P[1]]=good?0:(S.weak[P[1]]||0)+1;save();
@@ -587,7 +611,7 @@ $("rCheck").onclick=()=>{
     const right=s&&+s.value===q[2];if(right)ok++;
     box.style.borderColor=right?"var(--ok)":"var(--bad)";
     if(!right)box.insertAdjacentHTML("beforeend",`<div class="sub">Respuesta correcta: <b>${q[1][q[2]]}</b></div>`)});
-  const n=R[4].length;
+  const n=R[4].length;iggySay(ok===n);
   $("rFb").innerHTML=`<div class="fb ${ok===n?"ok":"bad"}"><b>${ok===n?"¡Perfecto! 🎉":"Acertaste "+ok+" de "+n+". Vuelve a leer la parte que fallaste 🔍"}</b></div>`;
   if(!rDone){rDone=true;addDone("read")}
   $("rCheck").classList.add("hide");$("rNext").classList.remove("hide");
@@ -616,7 +640,7 @@ $("wCheck").onclick=()=>{
   if(W.type==="tr"){
     const r=compare(W.en,v);const good=r.score>=75;
     $("wFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Muy bien! 👏":"Compara tu frase con esta 👇"}</b> (${r.score}% de palabras)<br>Una forma correcta: ${wordsHTML(W.en,r.marks)}<div class="sub" style="margin-top:6px">Puede haber otras formas correctas. Las palabras en rojo no aparecen en tu frase.</div></div>`;
-    S.weak[W.en]=good?0:(S.weak[W.en]||0)+1;
+    S.weak[W.en]=good?0:(S.weak[W.en]||0)+1;iggySay(good);
     if(!good){$("wFb").insertAdjacentHTML("beforeend",'<div class="sub" id="ltBox">🌐 Revisando tu gramática...</div>');grammarCheck(v).then(m=>{const b=$("ltBox");if(b)b.outerHTML=ltHTML(v,m)})}
     if(!wDone){wDone=true;addDone("write")}
     $("wCheck").classList.add("hide");$("wNext").classList.remove("hide");
@@ -714,6 +738,7 @@ function runQuiz(items,title,onDone,again){
       const k=+b.dataset.k;const right=k===correct;const key=it.tid+":"+it.qi;
       box.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.k===correct)x.classList.add("right")});
       if(!right)b.classList.add("wrong");
+      iggySay(right);
       if(right){ok++;delete S.errors[key]}else{S.errors[key]=(S.errors[key]||0)+1;wrongTopics[it.tid]=1}
       save();
       const full=sent.replace("___",opts[correct]);
@@ -801,13 +826,13 @@ function renderHome(){
   $("sStreak").textContent=st;$("sToday").textContent=c;$("sBest").textContent=Math.max(S.best,st);
   $("goalBar").style.width=Math.min(100,c/S.goal*100)+"%";
   $("goalTxt").textContent=c>=S.goal?`✅ Meta cumplida: ${c} de ${S.goal} ejercicios.`:`${c} de ${S.goal} ejercicios. Te faltan ${S.goal-c}.`;
-  $("hello").textContent=S.name?`Hola, ${S.name}. ¡A practicar!`:"Speaking, listening, reading, writing y gramática B1";
+  $("hello").textContent=S.name?`Hola, ${S.name}. Soy Iggy 🦎 ¡A practicar!`:"Practica con Iggy la iguana 🦎";
   const b=$("banner");
   if(c<S.goal){
     const h=new Date().getHours();
     const msg=st>0?`🔥 Tienes una racha de <b>${st} días</b>. Si no practicas hoy, la pierdes.`:(yesterdayMissed()?"😴 Ayer no practicaste. ¡Hoy empiezas una nueva racha!":"👋 Cumple tu meta de hoy para empezar tu racha.");
-    b.innerHTML=msg+(h>=20?" <b>¡Se acaba el día!</b>":"");b.classList.remove("hide");
-  } else if(!b.innerHTML.includes("Meta cumplida")) b.classList.add("hide");
+    b.innerHTML=msg+(h>=20?" <b>¡Se acaba el día!</b>":"");$("iggyImg").src=h>=20?"iguana-sad.svg":"iguana.svg";
+  } else {b.innerHTML="🎉 <b>¡Cumpliste la meta de hoy!</b> Tu racha es de "+st+" día(s). Si quieres, sigue practicando o haz el simulacro B1.";$("iggyImg").src="iguana.svg"}
   const cal=$("cal");cal.innerHTML="";const d=new Date();d.setDate(d.getDate()-27);
   for(let i=0;i<28;i++){const k=dayKey(d),n=S.days[k]||0;const el=document.createElement("div");
     el.textContent=d.getDate();if(n>=S.goal)el.className="done";else if(n>0)el.className="part";
@@ -818,13 +843,13 @@ function yesterdayMissed(){const d=new Date();d.setDate(d.getDate()-1);return Ob
 
 // ---------- Ajustes ----------
 function renderSet(){
-  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;
+  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;$("cfgIggy").checked=S.iggyVoice!==false;
   const t=S.total;$("totals").textContent=`Has hecho ${t.listen||0} ejercicios de escuchar, ${t.speak||0} de hablar, ${t.talk||0} de conversación, ${t.read||0} de lectura, ${t.write||0} de escritura y ${t.b1||0} de gramática B1. Días practicados: ${Object.keys(S.days).length}.`;
   notifStatus();
 }
 $("cfgSave").onclick=()=>{
   S.name=$("cfgName").value.trim();S.level=+$("cfgLevel").value;S.goal=Math.min(60,Math.max(3,+$("cfgGoal").value||10));
-  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;applyEng();save();syncSW();
+  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;S.iggyVoice=$("cfgIggy").checked;applyEng();save();syncSW();
   $("cfgSave").textContent="✓ Guardado";setTimeout(()=>$("cfgSave").textContent="Guardar",1500);
 };
 $("exportBtn").onclick=async()=>{const t=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(t);alert("Copia copiada. Pégala en una nota o envíatela por WhatsApp para guardarla.")}catch(e){prompt("Copia este texto y guárdalo:",t)}};
