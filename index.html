@@ -334,8 +334,13 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     <h2>Tu progreso</h2>
     <p class="sub" id="totals"></p>
     <div class="row">
-      <button class="sec" id="exportBtn">Copiar copia de seguridad</button>
-      <button class="sec" id="importBtn">Restaurar copia</button>
+      <button id="exportBtn">📤 Exportar copia</button>
+      <button class="sec" id="importBtn">📥 Importar copia</button>
+      <input type="file" id="importFile" accept=".json,application/json,text/plain" class="hide">
+    </div>
+    <p class="sub">Exportar crea un archivo con todo tu progreso (racha, temas B1, errores, palabras). Guárdalo en <b>Google Drive</b> o envíatelo por WhatsApp o correo. Si cambias de tablet o la formateas, abre la app y toca <b>Importar copia</b>. Tu clave de IA no va en la copia, por seguridad.</p>
+    <p class="sub" id="lastBackup"></p>
+    <div>
     </div>
   </div>
 </section>
@@ -480,7 +485,7 @@ const WRITE_TOPICS = [
 const KEY="dailyEnglish.v1";
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const dayKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{},cw:{},vToday:null,vLearned:[],aiKey:"",aiModel:"",cFlow:true};
+let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{},cw:{},lastBackup:"",vToday:null,vLearned:[],aiKey:"",aiModel:"",cFlow:true};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
 const save=()=>{try{const j=JSON.stringify(S);localStorage.setItem(KEY,j);return localStorage.getItem(KEY)===j}catch(e){return false}};
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -1077,7 +1082,7 @@ function yesterdayMissed(){const d=new Date();d.setDate(d.getDate()-1);return Ob
 
 // ---------- Ajustes ----------
 function renderSet(){
-  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;$("cfgAI").value=S.aiKey||"";$("cfgIggy").checked=S.iggyVoice!==false;
+  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;renderBackupInfo();$("cfgAI").value=S.aiKey||"";$("cfgIggy").checked=S.iggyVoice!==false;
   const t=S.total;$("totals").textContent=`Has hecho ${t.listen||0} ejercicios de escuchar, ${t.speak||0} de hablar, ${t.talk||0} de conversación, ${t.read||0} de lectura, ${t.write||0} de escritura y ${t.b1||0} de gramática B1. Días practicados: ${Object.keys(S.days).length}.`;
   notifStatus();
 }
@@ -1096,13 +1101,33 @@ let cfgT=null;
   el.addEventListener("blur",()=>saveSettings(true));
   el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();el.blur();saveSettings()}});
 });
+// ---------- Copia de seguridad en archivo ----------
+$("exportBtn").onclick=async()=>{
+  const data={...S};delete data.aiKey;data._app="daily-english";data._fecha=new Date().toISOString();
+  const name=`daily-english-copia-${today()}.json`;
+  const file=new File([JSON.stringify(data)],name,{type:"application/json"});
+  S.lastBackup=today();save();renderBackupInfo();
+  try{ // en Android abre el menú para compartir: puedes elegir "Guardar en Drive"
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Copia Daily English"});toast("¡Copia lista! Guárdala en Drive. 🦎");return}
+  }catch(e){if(e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  toast("Copia descargada en tu carpeta Descargas. Súbela a Drive. 🦎");
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async()=>{
+  const f=$("importFile").files[0];if(!f)return;
+  try{const d=JSON.parse(await f.text());if(d._app!=="daily-english")throw 0;
+    const key=S.aiKey;Object.keys(S).forEach(k=>{if(k in d)S[k]=d[k]});S.aiKey=key;save();applyEng();renderSet();renderHome();
+    toast(`¡Progreso restaurado! Racha: ${streak()} días. 🦎`);
+  }catch(e){toast("Ese archivo no es una copia de Daily English.",true)}
+  $("importFile").value="";
+};
+function renderBackupInfo(){const el=$("lastBackup");if(el)el.textContent=S.lastBackup?`Última copia: ${S.lastBackup}`:"Todavía no has hecho ninguna copia."}
 function toast(msg,bad){
   let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";document.body.appendChild(t)}
   t.innerHTML=`<img src="${bad?"iguana-sad.svg":"iguana.svg"}" alt=""><span>${msg}</span>`;t.className="show"+(bad?" bad":"");
   clearTimeout(t._h);t._h=setTimeout(()=>t.className="",2800);
 }
-$("exportBtn").onclick=async()=>{const t=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(t);alert("Copia copiada. Pégala en una nota o envíatela por WhatsApp para guardarla.")}catch(e){prompt("Copia este texto y guárdalo:",t)}};
-$("importBtn").onclick=()=>{const t=prompt("Pega aquí tu copia de seguridad:");if(!t)return;try{Object.assign(S,JSON.parse(decodeURIComponent(escape(atob(t.trim())))));save();renderSet();alert("¡Progreso restaurado!")}catch(e){alert("Ese texto no es una copia válida.")}};
 
 // ---------- Recordatorios ----------
 function notifStatus(){
