@@ -1,6 +1,6 @@
 // Service worker: funciona sin internet y envía el recordatorio diario
-const CACHE="daily-english-v5";
-const FILES=["./","./index.html","./grammar.js","./manifest.json","./icon-192.png","./icon-512.png","./iguana.svg","./iguana-sad.svg","./vocab.js","./convo.js"];
+const CACHE="daily-english-v6";
+const FILES=["./","./index.html","./grammar.js","./manifest.json","./icon-192.png","./icon-512.png","./iguana.svg","./iguana-sad.svg","./vocab.js","./convo.js","./cloud.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE&&x!=="de-state").map(x=>caches.delete(x)))));self.clients.claim()});
 self.addEventListener("fetch",e=>{

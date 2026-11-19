@@ -331,6 +331,10 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     <p class="sub" id="notifInfo"></p>
   </div>
   <div class="card">
+    <h2>☁️ Tu cuenta</h2>
+    <div id="cloudBox"><p class="sub">Cargando…</p></div>
+  </div>
+  <div class="card">
     <h2>Tu progreso</h2>
     <p class="sub" id="totals"></p>
     <div class="row">
@@ -487,7 +491,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 const dayKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{},cw:{},lastBackup:"",vToday:null,vLearned:[],aiKey:"",aiModel:"",cFlow:true};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
-const save=()=>{try{const j=JSON.stringify(S);localStorage.setItem(KEY,j);return localStorage.getItem(KEY)===j}catch(e){return false}};
+const save=()=>{try{S._updated=Date.now();const j=JSON.stringify(S);window.cloudPush&&window.cloudPush();localStorage.setItem(KEY,j);return localStorage.getItem(KEY)===j}catch(e){return false}};
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 addEventListener("pagehide",()=>save());document.addEventListener("visibilitychange",()=>{if(document.hidden)save()});
 const $=id=>document.getElementById(id);
@@ -1158,5 +1162,6 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)renderHome
 const _addDone=addDone;addDone=t=>{_addDone(t);syncSW()};
 applyEng();renderHome();syncSW();
 </script>
+<script type="module" src="cloud.js"></script>
 </body>
 </html>
