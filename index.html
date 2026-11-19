@@ -80,6 +80,24 @@ body.eng .es,body.eng #rTr,body.eng .gexp-es{display:none!important}
 .pill{font-size:13px;border-radius:999px;padding:2px 10px;background:var(--line);white-space:nowrap}
 .pill.good{background:var(--okbg);color:var(--ok)} .pill.mid{background:var(--orgbg);color:var(--bad)}
 a{color:var(--pri)}
+.chat{display:flex;flex-direction:column;gap:10px;margin:14px 0;max-height:52vh;overflow-y:auto;padding:4px}
+.msg{display:flex;gap:8px;align-items:flex-end;max-width:92%}
+.msg img{width:44px;height:44px;flex:none}
+.msg .b{border-radius:18px;padding:10px 14px;background:var(--pri2);border-bottom-left-radius:4px}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg.me .b{background:#111;color:#fff;border-bottom-left-radius:18px;border-bottom-right-radius:4px}
+@media (prefers-color-scheme:dark){.msg.me .b{background:var(--org);color:#111}}
+.msg .b.ok{background:var(--okbg);border:2px solid var(--ok)} .msg .b.bad{background:var(--badbg);border:2px solid var(--bad)}
+.ans{font-weight:700;font-size:18px;margin-top:6px}
+.live{background:var(--bg);border:2px dashed var(--org);border-radius:14px;padding:10px;margin:6px 0;min-height:44px;font-size:18px}
+.word{border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}
+.word h3{margin:0;font-size:26px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.word .type{font-size:13px;background:var(--orgbg);border-radius:999px;padding:2px 10px;font-weight:600}
+.word .lbl{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:10px}
+table.conj{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
+table.conj td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+table.conj td:first-child{color:var(--muted);width:42%}
+details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
 </head>
@@ -104,6 +122,12 @@ a{color:var(--pri)}
     <p class="sub" id="goalTxt"></p>
     <button class="big" id="startDaily">▶️ Empezar práctica de hoy</button>
     <p class="sub">La práctica diaria mezcla ejercicios de escuchar y de hablar. Tu racha solo sube si cumples la meta completa.</p>
+  </div>
+  <div class="card">
+    <h2>📚 Palabras de hoy</h2>
+    <p id="homeWords" style="font-size:19px;font-weight:600;margin:4px 0 10px"></p>
+    <button class="sec" onclick="show('vocab')">Aprenderlas</button>
+    <button class="sec" onclick="show('talk')">💬 Conversar con Iggy</button>
   </div>
   <div class="card">
     <h2>Últimos 28 días</h2>
@@ -146,34 +170,56 @@ a{color:var(--pri)}
     </div>
     <button class="mic" id="sMic" aria-label="Hablar">🎤</button>
     <div class="sub" id="sHint">Toca el micrófono y di la frase</div>
+    <div id="sLive" class="live hide" style="text-align:left"></div>
     <div id="sFb" style="text-align:left"></div>
     <div class="row" style="justify-content:center;margin-top:10px">
       <button class="sec hide" id="sNext">Siguiente ➡️</button>
       <button class="ghost" id="sSkip">Saltar</button>
     </div>
-    <button class="sec" id="goTalk" style="margin-top:12px">💬 Practicar conversación (responder preguntas)</button>
+    <button class="sec" id="goTalk" style="margin-top:12px">💬 Conversar con Iggy</button>
     <div id="noSR" class="banner hide" style="text-align:left">Tu navegador no permite reconocer voz. Abre la app en <b>Google Chrome</b> para usar este ejercicio.</div>
   </div>
 </section>
 
-<!-- RESPONDER (conversación) -->
+<!-- CONVERSACIÓN CON IGGY -->
 <section id="v-talk" class="hide">
-  <div class="card" style="text-align:center">
-    <span class="tag">Conversación</span>
-    <h2>💬 Responde la pregunta</h2>
-    <p class="sub">Escucha la pregunta y respóndela con tus palabras, en voz alta. No hay respuesta única: lo importante es hablar.</p>
-    <div class="phrase" id="tQ"></div>
-    <div class="es" id="tEs"></div>
-    <div class="row" style="justify-content:center;margin-top:10px">
-      <button class="sec" id="tPlay">🔊 Oír pregunta</button>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0">💬 Conversa con Iggy</h2>
+      <select id="cMode" style="width:auto">
+        <option value="say">¿Cómo dirías…?</option>
+        <option value="free">Preguntas libres</option>
+        <option value="ask">❓ Pregúntale a Iggy</option>
+      </select>
     </div>
-    <button class="mic" id="tMic" aria-label="Responder">🎤</button>
-    <div class="sub" id="tHint">Toca el micrófono y responde (mínimo 5 palabras)</div>
-    <div id="tFb" style="text-align:left"></div>
-    <div class="row" style="justify-content:center;margin-top:10px">
-      <button class="sec hide" id="tNext">Siguiente ➡️</button>
-      <button class="ghost" id="tSkip">Otra pregunta</button>
+    <p class="sub" style="margin:6px 0 0">Habla con calma: puedes hacer pausas, el micrófono no te corta. Toca <b>⏹️</b> cuando termines.</p>
+    <div id="chat" class="chat"></div>
+    <div id="cLive" class="live hide"></div>
+    <button class="mic" id="cMic" aria-label="Hablar">🎤</button>
+    <div class="row" style="justify-content:center">
+      <button class="sec" id="cRepeat">🔊 Repetir</button>
+      <button class="sec" id="cHint">💡 Pista</button>
+      <button class="sec" id="cSkip">⏭️ Otra</button>
+      <button class="sec" id="cType">⌨️ Escribir</button>
     </div>
+    <div id="cTypeBox" class="hide" style="margin-top:10px"><textarea id="cInput" placeholder="Escribe tu respuesta en inglés..."></textarea><button id="cSend" style="margin-top:6px">Enviar</button></div>
+    <button class="ghost" onclick="show('speak')" style="margin-top:8px">🗣️ Practicar pronunciación repitiendo frases →</button>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:500;margin-top:12px"><input type="checkbox" id="cFlow" style="width:22px;height:22px"> Conversación continua (Iggy pregunta y abre el micrófono sola)</label>
+  </div>
+</section>
+
+<!-- VOCABULARIO -->
+<section id="v-vocab" class="hide">
+  <div class="card">
+    <h2>📚 Tus 5 palabras de hoy</h2>
+    <p class="sub">Escucha cada palabra, lee cómo se explica en inglés y mira cómo se usa. Al final, Iggy te pone a prueba.</p>
+    <div id="vList"></div>
+    <button class="big" id="vQuizBtn">🦎 Pruébame con las palabras de hoy</button>
+  </div>
+  <div class="card hide" id="vQuiz"></div>
+  <div class="card">
+    <h2>Palabras aprendidas</h2>
+    <div id="vLearned" class="sub"></div>
   </div>
 </section>
 
@@ -269,6 +315,9 @@ a{color:var(--pri)}
     <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgEng" style="width:22px;height:22px"> Modo solo inglés (oculta las traducciones al español)</label>
     <p class="sub" style="margin-top:0">Se activa solo cuando tu promedio en los temas B1 llega a 85% o más. Puedes cambiarlo cuando quieras.</p>
     <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgIggy" style="width:22px;height:22px"> 🦎 Iggy me habla (me felicita en inglés)</label>
+    <label for="cfgAI">🤖 Clave gratis de Google Gemini (opcional)</label>
+    <input id="cfgAI" type="password" autocomplete="off" placeholder="Pega aquí tu clave (empieza por AIza...)" style="font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
+    <p class="sub" style="margin-top:4px">Con la clave, Iggy responde cualquier pregunta tuya en “💬 Conversar → Pregúntale a Iggy”. Sácala gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. La clave se guarda solo en esta tablet.</p>
     <label for="cfgTime">Hora del recordatorio diario</label>
     <input id="cfgTime" type="time">
     <div class="row" style="margin-top:14px">
@@ -293,12 +342,15 @@ a{color:var(--pri)}
   <button data-v="home" class="act"><span class="ic">🏠</span>Hoy</button>
   <button data-v="b1"><span class="ic">🎓</span>B1</button>
   <button data-v="listen"><span class="ic">🎧</span>Escuchar</button>
-  <button data-v="speak"><span class="ic">🗣️</span>Hablar</button>
+  <button data-v="talk"><span class="ic">💬</span>Hablar</button>
+  <button data-v="vocab"><span class="ic">📚</span>Palabras</button>
   <button data-v="read"><span class="ic">📖</span>Leer</button>
   <button data-v="write"><span class="ic">✍️</span>Escribir</button>
 </nav>
 
 <script src="grammar.js"></script>
+<script src="vocab.js"></script>
+<script src="convo.js"></script>
 <script>
 // ---------- Contenido ----------
 // [nivel, inglés, español]
@@ -424,7 +476,7 @@ const WRITE_TOPICS = [
 const KEY="dailyEnglish.v1";
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const dayKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{}};
+let S={name:"",level:2,goal:8,exam:"",gScore:{},errors:{},mocks:[],engOnly:false,engAuto:false,accent:"en-US",time:"19:00",days:{},best:0,total:{},weak:{},cw:{},vToday:null,vLearned:[],aiKey:"",aiModel:"",cFlow:true};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const $=id=>document.getElementById(id);
@@ -473,14 +525,36 @@ function speak(text,rate){
   speechSynthesis.speak(u);
 }
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function listen(onResult,onEnd,btn){
-  if(!SR){$("noSR").classList.remove("hide");return null}
-  const r=new SR();r.lang=S.accent;r.interimResults=false;r.maxAlternatives=3;
-  r.onresult=e=>{const alts=[...e.results[0]].map(a=>a.transcript);onResult(alts)};
-  r.onerror=e=>{onEnd(e.error)};
-  r.onend=()=>{btn.classList.remove("on");onEnd()};
-  btn.classList.add("on");speechSynthesis.cancel();
-  try{r.start()}catch(e){btn.classList.remove("on")}
+// Reconocimiento continuo: NO corta en las pausas. Termina cuando tocas ⏹️ (o tras 3 minutos).
+let activeRec=null;
+function joinTxt(...a){return a.filter(x=>x&&x.trim()).join(" ").replace(/\s+/g," ").trim()}
+function listen(onResult,onEnd,btn,hintEl){
+  if(!SR){const n=$("noSR");if(n)n.classList.remove("hide");alert("Para usar el micrófono abre la app en Google Chrome.");return null}
+  if(activeRec){activeRec.userStop=true;try{activeRec.stop()}catch(e){};return null}
+  const r=new SR();r.lang=S.accent;r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+  let base="",cur="",interim="";const t0=Date.now();r.userStop=false;
+  const icon=btn.textContent;
+  const show=()=>{if(hintEl){hintEl.classList.remove("hide");hintEl.innerHTML=(joinTxt(base,cur,interim)?"🎙️ "+esc(joinTxt(base,cur,interim)):"🎙️ Te escucho… habla con calma, puedes hacer pausas.")+"<div class='sub'>Toca ⏹️ cuando termines.</div>"}};
+  r.onresult=e=>{
+    let fin="";interim="";
+    for(let i=0;i<e.results.length;i++){const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal){ // algunos Android repiten el texto acumulado: lo evitamos
+        const a=fin.trim().toLowerCase(),b=t.trim().toLowerCase();
+        fin=b.startsWith(a)?t:(a.endsWith(b)?fin:fin+" "+t);
+      } else interim+=t}
+    cur=fin;show();
+  };
+  r.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){r.userStop=true;r.denied=true}};
+  r.onend=()=>{
+    base=joinTxt(base,cur);cur="";
+    if(!r.userStop&&Date.now()-t0<180000){try{r.start();return}catch(e){}}
+    const text=joinTxt(base,interim);activeRec=null;btn.classList.remove("on");btn.textContent=icon;
+    if(hintEl)hintEl.classList.add("hide");
+    if(r.denied){onEnd("not-allowed");return}
+    if(text)onResult([text]);onEnd(text?undefined:"no-speech");
+  };
+  speechSynthesis.cancel();activeRec=r;btn.classList.add("on");btn.textContent="⏹️";show();
+  try{r.start()}catch(e){activeRec=null;btn.classList.remove("on");btn.textContent=icon}
   return r;
 }
 
@@ -550,7 +624,6 @@ function newSpeak(){
 $("sModel").onclick=()=>speak(P[1]);
 $("sModelSlow").onclick=()=>speak(P[1],0.6);
 $("sMic").onclick=()=>{
-  $("sHint").textContent="Te estoy escuchando...";
   listen(alts=>{
     let best={score:-1};alts.forEach(a=>{const r=compare(P[1],a);if(r.score>best.score)best={...r,said:a}});
     tries++;const good=best.score>=80;iggySay(good);
@@ -561,35 +634,186 @@ $("sMic").onclick=()=>{
     if(err==="not-allowed")$("sHint").textContent="Debes permitir el micrófono para este ejercicio.";
     else if(err==="no-speech")$("sHint").textContent="No te escuché. Toca el micrófono otra vez.";
     else if(!err)$("sHint").textContent=sDone?"Puedes seguir practicando o pasar a la siguiente.":"Toca el micrófono para intentarlo de nuevo";
-  },$("sMic"));
+  },$("sMic"),$("sLive"));
 };
 $("sNext").onclick=()=>daily.active?nextDaily():newSpeak();
 $("sSkip").onclick=()=>newSpeak();
 $("goTalk").onclick=()=>show("talk");
 $("gearBtn").onclick=()=>{daily.active=false;show("set")};
 
-// ---------- Conversar ----------
-let Q=null,tDone=false;
-function newTalk(){
-  Q=pick(QUESTIONS,Q&&Q[1]);tDone=false;
-  $("tQ").textContent=Q[1];$("tEs").textContent=Q[2];$("tFb").innerHTML="";$("tNext").classList.add("hide");
-  $("tHint").textContent="Toca el micrófono y responde (mínimo 5 palabras)";
-  setTimeout(()=>speak(Q[1]),300);
+// ---------- Voz de Iggy (español + inglés en cadena) ----------
+const noEmoji=t=>t.replace(/[\p{Extended_Pictographic}‍️]/gu,"").replace(/[“”"]/g,"");
+function pickVoiceLang(l){return voices.find(v=>v.lang&&v.lang.replace("_","-").startsWith(l)&&/google/i.test(v.name))||voices.find(v=>v.lang&&v.lang.replace("_","-").startsWith(l))}
+function speakSeq(parts,done){
+  if(!("speechSynthesis" in window)){done&&done();return}
+  speechSynthesis.cancel();
+  parts=parts.filter(p=>p&&p.t);if(!parts.length){done&&done();return}
+  parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(noEmoji(p.t));
+    if(p.es){u.lang="es-ES";const v=pickVoiceLang("es");if(v)u.voice=v}else{u.lang=S.accent;const v=pickVoice();if(v)u.voice=v}
+    u.rate=p.rate||1;if(i===parts.length-1&&done){u.onend=done;u.onerror=done}
+    speechSynthesis.speak(u)});
 }
-$("tPlay").onclick=()=>speak(Q[1]);
-$("tSkip").onclick=()=>newTalk();
-$("tMic").onclick=()=>{
-  $("tHint").textContent="Te estoy escuchando... habla con calma";
-  listen(alts=>{
-    const said=alts[0];const n=norm(said).length;const good=n>=5;
-    $("tFb").innerHTML=`<div class="fb ${good?"ok":"bad"}"><b>${good?"¡Bien hecho! Dijiste "+n+" palabras 👏":"Respuesta muy corta ("+n+" palabras). Intenta decir una frase más larga."}</b><div style="margin-top:6px">Entendí: “${said}”</div><div class="sub" style="margin-top:6px">Si lo que entendí no es lo que dijiste, repite más despacio las palabras que cambiaron.</div></div>`;
-    if(good&&!tDone){tDone=true;addDone("talk");$("tNext").classList.remove("hide")}
-  },err=>{
-    if(err==="not-allowed")$("tHint").textContent="Debes permitir el micrófono para este ejercicio.";
-    else if(err==="no-speech")$("tHint").textContent="No te escuché. Toca el micrófono otra vez.";
-  },$("tMic"));
+
+// ---------- Conversación con Iggy ----------
+let C=null,cBusy=false,cTimer=null;
+function chatAdd(html,me,cls){
+  const d=document.createElement("div");d.className="msg"+(me?" me":"");
+  d.innerHTML=(me?"":`<img src="${cls==="bad"?"iguana-sad.svg":"iguana.svg"}" alt="">`)+`<div class="b ${cls||""}">${html}</div>`;
+  $("chat").appendChild(d);$("chat").scrollTop=$("chat").scrollHeight;
+  if($("chat").children.length>40)$("chat").firstChild.remove();
+}
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function cFlowOn(){return S.cFlow!==false}
+function afterIggy(){ // en modo continuo abre el micrófono sola
+  if(cFlowOn()&&!$("v-talk").classList.contains("hide")&&!activeRec&&$("cMode").value!=="ask")
+    setTimeout(()=>{if(!activeRec&&!$("v-talk").classList.contains("hide"))$("cMic").click()},500);
+}
+function newTalk(){
+  clearTimeout(cTimer);const mode=$("cMode").value;$("cTypeBox").classList.add("hide");
+  $("cHint").classList.toggle("hide",mode!=="say");$("cRepeat").classList.toggle("hide",mode==="ask");$("cSkip").classList.toggle("hide",mode==="ask");
+  if(mode==="ask"){
+    if(!$("chat").children.length||C?.mode!=="ask"){chatAdd(`¿Tienes una duda? Pregúntame lo que quieras sobre inglés: gramática, cómo se dice algo, la diferencia entre dos palabras… Puedes hablar 🎤 o escribir ⌨️.${S.aiKey?"":"<div class='sub'>Sin clave de IA busco en mis explicaciones. Con una clave gratis de Google (en ⚙️ Ajustes) te respondo cualquier cosa.</div>"}`);}
+    C={mode:"ask"};return;
+  }
+  if(mode==="say"){
+    const pool=CONVO.map((c,i)=>i).filter(i=>i!==C?.i);const w=[];pool.forEach(i=>{for(let k=0;k<1+Math.min(3,S.cw[i]||0);k++)w.push(i)});
+    const i=rnd(w);C={mode,i,item:CONVO[i],tries:0};
+    const intro=rnd(["A ver, genio:","Siguiente reto:","Ok, demuéstrame:","Esta es fácil… creo:","Pregunta de examen:"]);
+    chatAdd(`${intro} ¿Cómo dirías…<div class="ans">“${C.item[0]}”</div>`);
+    speakSeq([{t:intro+" ¿Cómo dirías: "+C.item[0],es:1}],afterIggy);
+  } else {
+    const q=pick(QUESTIONS,C?.q?.[1]);C={mode,q};
+    chatAdd(`${q[1]}<div class="sub es">${q[2]}</div>`);
+    speakSeq([{t:q[1]}],afterIggy);
+  }
+}
+function handleAnswer(said){
+  if(!C)return;chatAdd(esc(said),true);
+  if(C.mode==="ask")return askIggy(said);
+  if(C.mode==="say"){
+    const [es,answers,why,tid]=C.item;let best={score:-1};
+    answers.forEach(a=>{const r=compare(a,said);if(r.score>best.score)best={...r,a}});
+    C.tries++;const g=GRAMMAR.find(x=>x.id===tid);
+    const link=g?`<div class="sub">Tema: <a href="#" onclick="show('b1');openTopic('${tid}');return false">${g.t}</a></div>`:"";
+    if(best.score>=85){
+      const roast=rnd(ROAST_OK);S.cw[C.i]=0;C.done=true;
+      chatAdd(`${roast}<div class="ans">✅ ${best.a}</div>`,false,"ok");
+      speakSeq([{t:roast,es:1},{t:best.a}],next);addDone("talk");
+    } else {
+      const roast=best.score>=55?rnd(ROAST_MID):rnd(ROAST_BAD);S.cw[C.i]=(S.cw[C.i]||0)+1;
+      chatAdd(`${roast}<div style="margin-top:6px">${wordsHTML(best.a,best.marks)}</div><div class="ans">✅ Se dice: ${best.a}</div><div style="margin-top:6px">💡 ${why}</div>${link}<div class="sub" style="margin-top:4px">Repítela en voz alta para que se te quede.</div>`,false,"bad");
+      speakSeq([{t:roast,es:1},{t:"Se dice:",es:1},{t:best.a,rate:.9}],()=>{if(C.tries<2){chatAdd("Dale, repítela tú. 🎤");speakSeq([{t:"Dale, repítela tú.",es:1}],afterIggy)}else{C.done=true;addDone("talk");next()}});
+    }
+    save();return;
+  }
+  // preguntas libres: revisamos gramática por internet
+  const n=norm(said).length;
+  if(n<5){const r=rnd(["¿Eso fue todo? Mi abuela escribe mensajes más largos. Dime al menos una frase completa.","¿Respuesta de telegrama? Dame más palabras, que no se cobran."]);chatAdd(r,false,"bad");speakSeq([{t:r,es:1}],afterIggy);return}
+  chatAdd(`<span id="ltc">Déjame revisar tu gramática… 🧐</span>`);
+  grammarCheck(said).then(m=>{
+    const el=$("ltc");if(el)el.closest(".msg").remove();
+    if(m&&m.length){const roast=rnd(ROAST_BAD);chatAdd(roast+ltHTML(said,m),false,"bad");speakSeq([{t:roast,es:1}],next)}
+    else{const roast=rnd(ROAST_OK);chatAdd(roast+(m===null?"<div class='sub'>(Sin internet no pude revisar la gramática en detalle.)</div>":""),false,"ok");speakSeq([{t:roast,es:1}],next)}
+    addDone("talk");
+  });
+}
+function next(){if(daily.active){cTimer=setTimeout(nextDaily,1800);return}if(cFlowOn()&&!$("v-talk").classList.contains("hide"))cTimer=setTimeout(newTalk,1200);else chatAdd("Toca ⏭️ cuando quieras otra.")}
+$("cMic").onclick=()=>{listen(a=>handleAnswer(a[0]),err=>{
+  if(err==="not-allowed")chatAdd("Necesito permiso para usar el micrófono. Toca el candado 🔒 de Chrome y permite el micrófono.",false,"bad");
+  else if(err==="no-speech")chatAdd("No te escuché nada. ¿Te dio pena? Toca 🎤 otra vez. 🙂");
+},$("cMic"),$("cLive"))};
+$("cRepeat").onclick=()=>{if(C?.mode==="say")speakSeq([{t:"¿Cómo dirías: "+C.item[0],es:1}]);else if(C?.q)speakSeq([{t:C.q[1]}])};
+$("cHint").onclick=()=>{if(C?.mode!=="say")return;const a=C.item[1][0].split(" ");const h=a.slice(0,Math.ceil(a.length/3)).join(" ");chatAdd(`Pista, porque soy buena gente: empieza con <b>“${h}…”</b>`);speakSeq([{t:h}])};
+$("cSkip").onclick=()=>{if(activeRec){activeRec.userStop=true;activeRec.stop()}if(C?.mode==="say"&&!C.done)chatAdd(`¿Huyendo? Ok… se decía: <b>${C.item[1][0]}</b>`);newTalk()};
+$("cType").onclick=()=>{$("cTypeBox").classList.toggle("hide");$("cInput").focus()};
+$("cSend").onclick=()=>{const v=$("cInput").value.trim();if(!v)return;$("cInput").value="";handleAnswer(v)};
+$("cInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("cSend").click()}});
+$("cMode").onchange=()=>{$("chat").innerHTML="";C=null;newTalk()};
+$("cFlow").onchange=()=>{S.cFlow=$("cFlow").checked;save()};
+
+// ---------- Pregúntale a Iggy ----------
+const IGGY_PROMPT=`Eres Iggy, una iguana tierna y burlona que es tutora de inglés de una estudiante colombiana de ingeniería que se prepara para el examen B1. Tu humor es de molestar con cariño (sarcasmo suave, nunca cruel ni ofensivo). Responde SIEMPRE en español sencillo (salvo que te pida solo inglés), corto (máximo 150 palabras), con 1 frase de burla cariñosa al inicio, luego la explicación clara, 2 o 3 ejemplos en inglés con su traducción, y si aplica el error típico de los hispanohablantes. Si la pregunta no es sobre inglés, contesta con humor y vuelve al inglés.`;
+async function askAI(q){
+  const model=S.aiModel||"gemini-flash-latest";
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(S.aiKey)}`,{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({systemInstruction:{parts:[{text:IGGY_PROMPT+(S.engOnly?" La estudiante ya tiene nivel avanzado: responde SOLO en inglés sencillo.":"")}]},contents:[{role:"user",parts:[{text:q}]}],generationConfig:{maxOutputTokens:700,temperature:.8}})});
+  const j=await r.json();
+  if(!r.ok)throw new Error(j.error?.message||("HTTP "+r.status));
+  return j.candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
+}
+const md=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"<i>$1</i>").replace(/^\s*[-*] /gm,"• ").replace(/\n/g,"<br>");
+function localSearch(q){
+  const words=norm(q).filter(w=>w.length>2&&!["que","como","the","por","para","una","con","los","las","del","cual","diferencia","entre","when","use","usa","uso","usar"].includes(w));
+  const hits=[];
+  GRAMMAR.forEach(g=>{const txt=(g.t+" "+g.es+" "+g.exp+" "+g.q.map(x=>x[0]+" "+x[1].join(" ")).join(" ")).toLowerCase();let sc=0;words.forEach(w=>{if(txt.includes(w))sc+=(g.t+g.es).toLowerCase().includes(w)?5:1});if(sc)hits.push({sc,g})});
+  const vh=VOCAB.filter(v=>words.some(w=>v.w.toLowerCase().includes(w)||v.lit.toLowerCase().includes(w)));
+  hits.sort((a,b)=>b.sc-a.sc);return {g:hits.slice(0,2).map(h=>h.g),v:vh.slice(0,2)};
+}
+async function askIggy(q){
+  if(S.aiKey){
+    chatAdd(`<span id="aiw">Pensando… 🦎💭</span>`);
+    try{const a=await askAI(q);$("aiw").closest(".msg").remove();chatAdd(md(a),false,"ok");speakSeq([{t:a.split("\n")[0].replace(/[*#]/g,""),es:!S.engOnly}]);addDone("talk");return}
+    catch(e){$("aiw").closest(".msg").remove();chatAdd(`No pude preguntarle a la IA (${esc(e.message)}). Busco en mis explicaciones:`,false,"bad")}
+  }
+  const r=localSearch(q);
+  if(!r.g.length&&!r.v.length){chatAdd("Mmm, no encontré eso en mis explicaciones. Prueba con palabras clave como “past perfect”, “should have”, “although”… o activa la IA gratis en ⚙️ Ajustes para preguntarme lo que sea.",false,"bad");return}
+  chatAdd("Esto es lo que tengo sobre eso:"+r.g.map(g=>`<div style="margin-top:8px"><b>${g.t}</b> (${g.es})${g.exp}<a href="#" onclick="show('b1');openTopic('${g.id}');return false">Practicar este tema →</a></div>`).join("")+r.v.map(v=>`<div style="margin-top:8px"><b>${v.w}</b> = ${v.lit}<br><i>${v.ex}</i></div>`).join(""),false,"ok");
+}
+
+// ---------- Vocabulario diario ----------
+function todayWords(){
+  if(!S.vToday||S.vToday.day!==today()){
+    const learned=new Set(S.vLearned);let ids=VOCAB.map((v,i)=>i).filter(i=>!learned.has(i));
+    if(ids.length<5)ids=VOCAB.map((v,i)=>i); // ya aprendió todo: repaso
+    S.vToday={day:today(),ids:ids.slice(0,5),done:false};save();
+  }
+  return S.vToday.ids.map(i=>({...VOCAB[i],i}));
+}
+function conjTable(v){
+  const [b,s3,p,pp,ing]=v;
+  const rows=[["Presente simple",`I ${b} / She ${s3}`],["Presente continuo",`I'm ${ing}`],["Pasado simple",`I ${p} · I didn't ${b} · Did you ${b}?`],
+  ["Pasado continuo",`I was ${ing}`],["Presente perfecto",`I have ${pp} / She has ${pp}`],["Presente perfecto continuo",`I have been ${ing}`],
+  ["Pasado perfecto",`I had ${pp}`],["Futuro (will)",`I will ${b}`],["Futuro (going to)",`I'm going to ${b}`],["Futuro continuo",`I will be ${ing}`],
+  ["Condicional 2",`If I could, I would ${b}`],["Condicional 3",`I would have ${pp}`],["Modal en pasado",`I should have ${pp}`]];
+  return `<details><summary>Ver conjugación en los tiempos del B1</summary><div class="sub" style="margin-top:6px">Formas: <b>${b}</b> – <b>${p}</b> – <b>${pp}</b> – <b>${ing}</b></div><table class="conj">${rows.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("")}</table></details>`;
+}
+const sayBtn=t=>`<button class="ghost" onclick="speak(${JSON.stringify(t).replace(/"/g,"&quot;")})">🔊</button>`;
+function renderVocab(){
+  const ws=todayWords();$("vQuiz").classList.add("hide");
+  $("vList").innerHTML=ws.map(v=>`<div class="word"><h3>${v.w} ${sayBtn(v.w)}<span class="type">${v.t}</span></h3>
+    <div class="lbl">Traducción literal</div><div>${v.lit}</div>
+    <div class="lbl">Explained in English (sin usar la palabra)</div><div>${v.def} ${sayBtn(v.def)}</div>
+    <div class="lbl">Ejemplo</div><div><i>${v.ex}</i> ${sayBtn(v.ex)}</div><div class="es">${v.exEs}</div>
+    ${v.v?conjTable(v.v):""}</div>`).join("");
+  $("vQuizBtn").textContent=S.vToday.done?"🔁 Repasar las palabras de hoy":"🦎 Pruébame con las palabras de hoy";
+  $("vLearned").innerHTML=S.vLearned.length?S.vLearned.map(i=>`<span class="pill" style="display:inline-block;margin:3px">${VOCAB[i].w}</span>`).join(""):"Todavía ninguna. ¡Hoy empiezas!";
+}
+$("vQuizBtn").onclick=()=>{
+  const ws=shuffle(todayWords());let i=0,ok=0;const box=$("vQuiz");box.classList.remove("hide");
+  function q(){
+    if(i>=ws.length){
+      const all=ok===ws.length;
+      if(!S.vToday.done){S.vToday.done=true;ws.forEach(w=>{if(!S.vLearned.includes(w.i))S.vLearned.push(w.i)});addDone("vocab")}
+      save();const roast=all?"¡5 de 5! Ok, ya puedes presumir… un poquito. 🦎":`${ok} de ${ws.length}. Las iguanas también olvidamos cosas… pero no tantas. Repasa y vuelve a intentar.`;
+      box.innerHTML=`<div class="fb ${all?"ok":"bad"}"><b>${roast}</b></div><div class="row" style="margin-top:12px"><button onclick="$('vQuizBtn').click()">🔁 Otra vez</button>${daily.active?'<button class="sec" onclick="nextDaily()">Siguiente ➡️</button>':""}</div>`;
+      speakSeq([{t:roast,es:1}]);renderVocabLearned();return;
+    }
+    const w=ws[i];const opts=shuffle(ws.map(x=>x.w));
+    box.innerHTML=`<div class="sub">Pregunta ${i+1} de ${ws.length}</div><h2>¿Qué palabra es?</h2><p style="font-size:19px">“${w.def}” ${sayBtn(w.def)}</p>${opts.map(o=>`<button class="opt">${o}</button>`).join("")}<div id="vFb"></div>`;
+    speak(w.def);
+    box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+      const right=b.textContent===w.w;if(right)ok++;
+      box.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(x.textContent===w.w)x.classList.add("right")});if(!right)b.classList.add("wrong");
+      const roast=right?rnd(["Bien. Tu cerebro sí sirve. 🧠","¡Eso! Te ganaste una mosca. 🪰","Correcto. Me sorprendes (un poco)."]):rnd(["¿En serio? Si la acabas de ver… 🙄","Nop. Tu memoria y mi wifi: igual de inestables.","No, pero buen intento. Mírala bien:"]);
+      $("vFb").innerHTML=`<div class="fb ${right?"ok":"bad"}"><b>${roast}</b><div><b>${w.w}</b> = ${w.lit}</div><div><i>${w.ex}</i></div></div><button style="margin-top:10px" id="vGo">Siguiente ➡️</button>`;
+      speakSeq([{t:roast,es:1},{t:w.ex}]);$("vGo").onclick=()=>{i++;q()};
+    });
+    box.scrollIntoView({behavior:"smooth"});
+  }
+  q();
 };
-$("tNext").onclick=()=>daily.active?nextDaily():newTalk();
+function renderVocabLearned(){$("vLearned").innerHTML=S.vLearned.map(i=>`<span class="pill" style="display:inline-block;margin:3px">${VOCAB[i].w}</span>`).join("")}
 
 // ---------- Leer ----------
 let R=null,rDone=false;
@@ -799,8 +1023,10 @@ function ltHTML(text,matches){
 // ---------- Práctica diaria guiada ----------
 const daily={active:false,left:0,i:0};
 function nextDaily(){
-  const order=["b1","listen","speak","read","write","b1","talk","listen"];
-  const v=order[daily.i++%order.length];
+  const order=["vocab","b1","talk","listen","read","write","b1","speak"];
+  let v=order[daily.i++%order.length];
+  if(v==="vocab"&&S.vToday&&S.vToday.day===today()&&S.vToday.done)v=order[daily.i++%order.length];
+  if(v==="talk"){show("talk");$("cMode").value="say";$("chat").innerHTML="";C=null;newTalk();return}
   if(v==="b1"){const t=plan().today;show("b1");if(t.length)openTopic(t[(daily.i>>2)%t.length].id);else $("mockBtn").click();return}
   show(v);
 }
@@ -811,10 +1037,11 @@ $("startDaily").onclick=()=>{
 
 // ---------- Navegación ----------
 function show(v){
-  ["home","b1","listen","speak","talk","read","write","set"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==v));
+  ["home","b1","listen","speak","talk","read","write","set","vocab"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==v));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("act",b.dataset.v===v));
-  if(v==="listen")newListen(); if(v==="speak")newSpeak(); if(v==="talk")newTalk();
-  if(v==="read")newRead(); if(v==="write")newWrite(); if(v==="b1")renderB1();
+  if(v==="listen")newListen(); if(v==="speak")newSpeak(); if(v==="talk"){$("cFlow").checked=cFlowOn();if(!$("chat").children.length)newTalk()}
+  if(v!=="talk"){clearTimeout(cTimer);if(activeRec){activeRec.userStop=true;activeRec.stop()}}
+  if(v==="read")newRead(); if(v==="write")newWrite(); if(v==="b1")renderB1(); if(v==="vocab")renderVocab();
   if(v==="home")renderHome(); if(v==="set")renderSet();
   window.scrollTo(0,0);
 }
@@ -824,6 +1051,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{daily.active=f
 function renderHome(){
   const c=countToday(),st=streak();
   $("sStreak").textContent=st;$("sToday").textContent=c;$("sBest").textContent=Math.max(S.best,st);
+  $("homeWords").textContent=todayWords().map(w=>w.w).join(" · ")+(S.vToday.done?"  ✅":"");
   $("goalBar").style.width=Math.min(100,c/S.goal*100)+"%";
   $("goalTxt").textContent=c>=S.goal?`✅ Meta cumplida: ${c} de ${S.goal} ejercicios.`:`${c} de ${S.goal} ejercicios. Te faltan ${S.goal-c}.`;
   $("hello").textContent=S.name?`Hola, ${S.name}. Soy Iggy 🦎 ¡A practicar!`:"Practica con Iggy la iguana 🦎";
@@ -843,13 +1071,13 @@ function yesterdayMissed(){const d=new Date();d.setDate(d.getDate()-1);return Ob
 
 // ---------- Ajustes ----------
 function renderSet(){
-  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;$("cfgIggy").checked=S.iggyVoice!==false;
+  $("cfgName").value=S.name;$("cfgLevel").value=S.level;$("cfgGoal").value=S.goal;$("cfgAccent").value=S.accent;$("cfgTime").value=S.time;$("cfgEng").checked=!!S.engOnly;$("cfgAI").value=S.aiKey||"";$("cfgIggy").checked=S.iggyVoice!==false;
   const t=S.total;$("totals").textContent=`Has hecho ${t.listen||0} ejercicios de escuchar, ${t.speak||0} de hablar, ${t.talk||0} de conversación, ${t.read||0} de lectura, ${t.write||0} de escritura y ${t.b1||0} de gramática B1. Días practicados: ${Object.keys(S.days).length}.`;
   notifStatus();
 }
 $("cfgSave").onclick=()=>{
   S.name=$("cfgName").value.trim();S.level=+$("cfgLevel").value;S.goal=Math.min(60,Math.max(3,+$("cfgGoal").value||10));
-  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;S.iggyVoice=$("cfgIggy").checked;applyEng();save();syncSW();
+  S.accent=$("cfgAccent").value;S.time=$("cfgTime").value||"19:00";S.engOnly=$("cfgEng").checked;S.aiKey=$("cfgAI").value.trim();S.iggyVoice=$("cfgIggy").checked;applyEng();save();syncSW();
   $("cfgSave").textContent="✓ Guardado";setTimeout(()=>$("cfgSave").textContent="Guardar",1500);
 };
 $("exportBtn").onclick=async()=>{const t=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(t);alert("Copia copiada. Pégala en una nota o envíatela por WhatsApp para guardarla.")}catch(e){prompt("Copia este texto y guárdalo:",t)}};
