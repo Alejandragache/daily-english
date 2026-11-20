@@ -1,6 +1,13 @@
 // Inicio de sesión con Google + progreso en la nube (Firebase, plan gratis Spark).
 // Para activarlo, pega aquí el bloque firebaseConfig de tu proyecto.
-const FIREBASE_CONFIG = null;
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJxdJNdqQUDyTFA1imkNDQXmIimIV6AGw",
+  authDomain: "daily-english-95e96.firebaseapp.com",
+  projectId: "daily-english-95e96",
+  storageBucket: "daily-english-95e96.firebasestorage.app",
+  messagingSenderId: "26374809702",
+  appId: "1:26374809702:web:35a638e4d45df118cca5a7"
+};
 
 const V = "10.12.2";
 const box = document.getElementById("cloudBox");
