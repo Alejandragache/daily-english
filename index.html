@@ -113,6 +113,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 .vrow{display:flex;align-items:center;gap:6px;font-size:15px}
 .ideas{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
 .idea{display:flex;align-items:center;gap:4px;font-size:15px;font-style:italic}
+.mic.talking{background:var(--org);color:#111}
 .fbline{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bad)}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
@@ -211,7 +212,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
       </select>
     </div>
     <select id="cScene" style="margin-top:10px"></select>
-    <p class="sub" style="margin:6px 0 0">Habla con calma: puedes hacer pausas, el micrófono no te corta. Toca <b>⏹️</b> cuando termines.</p>
+    <p class="sub" style="margin:6px 0 0">Habla con calma: puedes hacer pausas, el micrófono no te corta. Toca <b>⏹️</b> cuando termines. Si Iggy está hablando, el botón se pone naranja <b>⏩</b>: tócalo para saltar lo que dice.</p>
     <div id="chat" class="chat"></div>
     <div id="cLive" class="live hide"></div>
     <button class="mic" id="cMic" aria-label="Hablar">🎤</button>
@@ -574,9 +575,20 @@ function pickVoice(){
   const v=voices.filter(v=>v.lang&&v.lang.replace("_","-").startsWith(S.accent));
   return v.find(x=>/google/i.test(x.name))||v[0]||voices.find(x=>/^en/i.test(x.lang));
 }
+// Estado de lo que Iggy está diciendo. Cada frase nueva invalida los avisos de las anteriores,
+// así un "cancel" nunca dispara pasos viejos (eso causaba que repitiera la frase anterior en bucle).
+var spk={id:0,active:false,done:null,timer:null};
+function spkFinish(id){
+  if(id!==spk.id||!spk.active)return;
+  spk.active=false;clearTimeout(spk.timer);const d=spk.done;spk.done=null;micIdle();
+  if(d)d();
+}
+function spkDrop(){spk.id++;spk.active=false;spk.done=null;clearTimeout(spk.timer);micIdle()}
+function skipSpeech(){const id=spk.id;try{speechSynthesis.cancel()}catch(e){};setTimeout(()=>spkFinish(id),150)}
+function micIdle(){const b=document.getElementById("cMic");if(b&&!activeRec){b.textContent="🎤";b.classList.remove("talking")}}
 function speak(text,rate){
   if(!("speechSynthesis" in window)){alert("Tu navegador no puede leer en voz alta.");return}
-  speechSynthesis.cancel();
+  if(!spk.active)speechSynthesis.cancel(); // si Iggy está hablando, se pone en cola y no se interrumpe
   const u=new SpeechSynthesisUtterance(text);
   u.lang=S.accent;u.rate=rate||0.95;const v=pickVoice();if(v)u.voice=v;
   speechSynthesis.speak(u);
@@ -611,7 +623,7 @@ function listen(onResult,onEnd,btn,hintEl){
     const cv=confs.filter(Boolean);const conf=cv.length?cv.reduce((a,b)=>a+b,0)/cv.length:0;
     if(text)onResult([text],conf);onEnd(text?undefined:"no-speech");
   };
-  speechSynthesis.cancel();activeRec=r;btn.classList.add("on");btn.textContent="⏹️";show();
+  spkDrop();try{speechSynthesis.cancel()}catch(e){};activeRec=r;btn.classList.remove("talking");btn.classList.add("on");btn.textContent="⏹️";show();
   try{r.start()}catch(e){activeRec=null;btn.classList.remove("on");btn.textContent=icon}
   return r;
 }
@@ -703,13 +715,21 @@ $("gearBtn").onclick=()=>{daily.active=false;show("set")};
 const noEmoji=t=>t.replace(/[\p{Extended_Pictographic}‍️]/gu,"").replace(/[“”"]/g,"");
 function pickVoiceLang(l){return voices.find(v=>v.lang&&v.lang.replace("_","-").startsWith(l)&&/google/i.test(v.name))||voices.find(v=>v.lang&&v.lang.replace("_","-").startsWith(l))}
 function speakSeq(parts,done){
-  if(!("speechSynthesis" in window)){done&&done();return}
-  speechSynthesis.cancel();
-  parts=parts.filter(p=>p&&p.t);if(!parts.length){done&&done();return}
-  parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(noEmoji(p.t));
+  const id=++spk.id; // primero invalidamos lo anterior, luego cancelamos
+  clearTimeout(spk.timer);
+  if(!("speechSynthesis" in window)){spk.active=false;done&&done();return}
+  try{speechSynthesis.cancel()}catch(e){}
+  parts=parts.filter(p=>p&&p.t);if(!parts.length){spk.active=false;done&&done();return}
+  if(activeRec){spk.active=false;if(done)setTimeout(done,0);return} // nunca hablar mientras ella está grabando
+  spk.active=true;spk.done=done||null;
+  const b=document.getElementById("cMic");if(b){b.textContent="⏩";b.classList.add("talking")}
+  let chars=0;
+  parts.forEach((p,i)=>{const t=noEmoji(p.t);chars+=t.length;const u=new SpeechSynthesisUtterance(t);
     if(p.es){u.lang="es-ES";const v=pickVoiceLang("es");if(v)u.voice=v}else{u.lang=S.accent;const v=pickVoice();if(v)u.voice=v}
-    u.rate=p.rate||1;if(i===parts.length-1&&done){u.onend=done;u.onerror=done}
+    u.rate=p.rate||1;if(i===parts.length-1){u.onend=()=>spkFinish(id);u.onerror=()=>spkFinish(id)}
     speechSynthesis.speak(u)});
+  // seguro por si Android no avisa que terminó
+  spk.timer=setTimeout(()=>spkFinish(id),chars*110+4000);
 }
 
 // ---------- Conversación con Iggy ----------
@@ -724,7 +744,7 @@ const rnd=a=>a[Math.floor(Math.random()*a.length)];
 function cFlowOn(){return S.cFlow!==false}
 function afterIggy(){ // en modo continuo abre el micrófono sola
   if(cFlowOn()&&!$("v-talk").classList.contains("hide")&&!activeRec)
-    setTimeout(()=>{if(!activeRec&&!$("v-talk").classList.contains("hide"))$("cMic").click()},500);
+    setTimeout(()=>{if(!activeRec&&!spk.active&&!$("v-talk").classList.contains("hide"))$("cMic").click()},900);
 }
 function newTalk(){
   clearTimeout(cTimer);const mode=$("cMode").value;$("cTypeBox").classList.add("hide");
@@ -826,7 +846,8 @@ function handleAnswer(said,conf){
   coach({said,conf,target:null,meaningOK:true,onDone:()=>{addDone("talk");next()}});
 }
 function next(){if(daily.active){cTimer=setTimeout(nextDaily,1800);return}if(cFlowOn()&&!$("v-talk").classList.contains("hide"))cTimer=setTimeout(newTalk,1200);else chatAdd("Toca ⏭️ cuando quieras otra.")}
-$("cMic").onclick=()=>{listen((a,conf)=>handleAnswer(a[0],conf),err=>{
+$("cMic").onclick=()=>{if(spk.active&&!activeRec){skipSpeech();return} // tocar mientras Iggy habla = saltar lo que dice
+  listen((a,conf)=>handleAnswer(a[0],conf),err=>{
   if(err==="not-allowed")chatAdd("Necesito permiso para usar el micrófono. Toca el candado 🔒 de Chrome y permite el micrófono.",false,"bad");
   else if(err==="no-speech")chatAdd("No te escuché nada. ¿Te dio pena? Toca 🎤 otra vez. 🙂");
 },$("cMic"),$("cLive"))};
