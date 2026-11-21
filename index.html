@@ -101,6 +101,14 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(30px);opacity:0;pointer-events:none;transition:.3s;background:#111;color:#fff;border:2px solid var(--pri);border-radius:18px;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:50;max-width:calc(100% - 32px);font-weight:600}
 #toast img{width:40px;height:40px}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)} #toast.bad{border-color:var(--org)}
+#askFab{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;padding:0;background:var(--org);color:#111;font-size:32px;font-weight:900;border:3px solid #111;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:40}
+#askPanel{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+#askPanel.hide{display:none!important}
+.askSheet{background:var(--card);width:100%;max-width:760px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.tabs{display:flex;gap:8px;margin:12px 0 4px}
+.tab{flex:1;background:var(--bg);color:var(--ink);border:2px solid var(--line);font-size:15px;padding:10px 6px}
+.tab.act{background:var(--pri);color:#fff;border-color:var(--pri)}
+.fbline{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bad)}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
 </head>
@@ -131,6 +139,8 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     <p id="homeWords" style="font-size:19px;font-weight:600;margin:4px 0 10px"></p>
     <button class="sec" onclick="show('vocab')">Aprenderlas</button>
     <button class="sec" onclick="show('talk')">💬 Conversar con Iggy</button>
+    <button class="sec" onclick="openAsk('how')">🗣️ ¿Cómo se dice…?</button>
+    <button class="sec" onclick="openAsk('ask')">❓ Pregúntale a Iggy</button>
   </div>
   <div class="card">
     <h2>Últimos 28 días</h2>
@@ -190,11 +200,12 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     <div class="row" style="justify-content:space-between">
       <h2 style="margin:0">💬 Conversa con Iggy</h2>
       <select id="cMode" style="width:auto">
-        <option value="say">¿Cómo dirías…?</option>
-        <option value="free">Preguntas libres</option>
-        <option value="ask">❓ Pregúntale a Iggy</option>
+        <option value="dialog">☕ Conversaciones diarias</option>
+        <option value="say">🎯 ¿Cómo dirías…? (B1)</option>
+        <option value="free">💭 Preguntas libres</option>
       </select>
     </div>
+    <select id="cScene" style="margin-top:10px"></select>
     <p class="sub" style="margin:6px 0 0">Habla con calma: puedes hacer pausas, el micrófono no te corta. Toca <b>⏹️</b> cuando termines.</p>
     <div id="chat" class="chat"></div>
     <div id="cLive" class="live hide"></div>
@@ -321,7 +332,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="cfgIggy" style="width:22px;height:22px"> 🦎 Iggy me habla (me felicita en inglés)</label>
     <label for="cfgAI">🤖 Clave gratis de Google Gemini (opcional)</label>
     <input id="cfgAI" type="password" autocomplete="off" placeholder="Pega aquí tu clave (empieza por AIza...)" style="font:inherit;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
-    <p class="sub" style="margin-top:4px">Con la clave, Iggy responde cualquier pregunta tuya en “💬 Hablar → ❓ Pregúntale a Iggy” (menú de arriba). Sácala gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. La clave se guarda solo en esta tablet.</p>
+    <p class="sub" style="margin-top:4px">Con la clave, Iggy responde cualquier pregunta (botón naranja <b>?</b>), te explica cómo se dice cualquier cosa y puede charlar libremente contigo en 💬 Hablar. Sácala gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. La clave se guarda solo en esta tablet.</p>
     <label for="cfgTime">Hora del recordatorio diario</label>
     <input id="cfgTime" type="time">
     <div class="row" style="margin-top:14px">
@@ -351,6 +362,29 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 
 </main>
 
+<!-- BOTÓN ? Y PANEL DE AYUDA -->
+<button id="askFab" aria-label="Pregúntale a Iggy">?</button>
+<div id="askPanel" class="hide" role="dialog" aria-label="Pregúntale a Iggy">
+  <div class="askSheet">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 style="margin:0;display:flex;gap:8px;align-items:center"><img src="iguana.svg" alt="" style="width:40px">Iggy te ayuda</h2>
+      <button class="ghost" id="askClose" aria-label="Cerrar" style="font-size:26px">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="tab act" data-t="how">🗣️ ¿Cómo se dice…?</button>
+      <button class="tab" data-t="ask">❓ Pregúntale a Iggy</button>
+    </div>
+    <p class="sub" id="askIntro"></p>
+    <div id="askChat" class="chat" style="max-height:46vh"></div>
+    <div class="row" style="flex-wrap:nowrap;gap:8px">
+      <textarea id="askInput" rows="2" style="min-height:52px"></textarea>
+      <button class="mic" id="askMic" style="width:56px;height:56px;font-size:24px;margin:0;flex:none" aria-label="Hablar">🎤</button>
+    </div>
+    <div id="askLive" class="live hide"></div>
+    <button id="askSend" class="big" style="margin-top:8px">Enviar</button>
+  </div>
+</div>
+
 <nav>
   <button data-v="home" class="act"><span class="ic">🏠</span>Hoy</button>
   <button data-v="b1"><span class="ic">🎓</span>B1</button>
@@ -364,6 +398,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 <script src="grammar.js"></script>
 <script src="vocab.js"></script>
 <script src="convo.js"></script>
+<script src="dialogues.js"></script>
 <script>
 // ---------- Contenido ----------
 // [nivel, inglés, español]
@@ -671,25 +706,23 @@ function speakSeq(parts,done){
 
 // ---------- Conversación con Iggy ----------
 let C=null,cBusy=false,cTimer=null;
-function chatAdd(html,me,cls){
+function chatAdd(html,me,cls,el){el=el||$("chat");
   const d=document.createElement("div");d.className="msg"+(me?" me":"");
   d.innerHTML=(me?"":`<img src="${cls==="bad"?"iguana-sad.svg":"iguana.svg"}" alt="">`)+`<div class="b ${cls||""}">${html}</div>`;
-  $("chat").appendChild(d);$("chat").scrollTop=$("chat").scrollHeight;
-  if($("chat").children.length>40)$("chat").firstChild.remove();
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+  if(el.children.length>40)el.firstChild.remove();
 }
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
 function cFlowOn(){return S.cFlow!==false}
 function afterIggy(){ // en modo continuo abre el micrófono sola
-  if(cFlowOn()&&!$("v-talk").classList.contains("hide")&&!activeRec&&$("cMode").value!=="ask")
+  if(cFlowOn()&&!$("v-talk").classList.contains("hide")&&!activeRec)
     setTimeout(()=>{if(!activeRec&&!$("v-talk").classList.contains("hide"))$("cMic").click()},500);
 }
 function newTalk(){
   clearTimeout(cTimer);const mode=$("cMode").value;$("cTypeBox").classList.add("hide");
-  $("cHint").classList.toggle("hide",mode!=="say");$("cRepeat").classList.toggle("hide",mode==="ask");$("cSkip").classList.toggle("hide",mode==="ask");
-  if(mode==="ask"){
-    if(!$("chat").children.length||C?.mode!=="ask"){chatAdd(`¿Tienes una duda? Pregúntame lo que quieras sobre inglés: gramática, cómo se dice algo, la diferencia entre dos palabras… Puedes hablar 🎤 o escribir ⌨️.${S.aiKey?"":"<div class='sub'>Sin clave de IA busco en mis explicaciones. Con una clave gratis de Google (en ⚙️ Ajustes) te respondo cualquier cosa.</div>"}`);}
-    C={mode:"ask"};return;
-  }
+  $("cHint").classList.toggle("hide",mode==="free");$("cScene").classList.toggle("hide",mode!=="dialog");
+  $("cHint").textContent=mode==="dialog"?"🆘 ¿Qué digo?":"💡 Pista";
+  if(mode==="dialog")return dialogNext();
   if(mode==="say"){
     const pool=CONVO.map((c,i)=>i).filter(i=>i!==C?.i);const w=[];pool.forEach(i=>{for(let k=0;k<1+Math.min(3,S.cw[i]||0);k++)w.push(i)});
     const i=rnd(w);C={mode,i,item:CONVO[i],tries:0};
@@ -704,7 +737,8 @@ function newTalk(){
 }
 function handleAnswer(said){
   if(!C)return;chatAdd(esc(said),true);
-  if(C.mode==="ask")return askIggy(said);
+  if(C.mode==="dialog")return dialogAnswer(said);
+  if(C.mode==="aichat")return aiChatAnswer(said);
   if(C.mode==="say"){
     const [es,answers,why,tid]=C.item;let best={score:-1};
     answers.forEach(a=>{const r=compare(a,said);if(r.score>best.score)best={...r,a}});
@@ -737,22 +771,25 @@ $("cMic").onclick=()=>{listen(a=>handleAnswer(a[0]),err=>{
   if(err==="not-allowed")chatAdd("Necesito permiso para usar el micrófono. Toca el candado 🔒 de Chrome y permite el micrófono.",false,"bad");
   else if(err==="no-speech")chatAdd("No te escuché nada. ¿Te dio pena? Toca 🎤 otra vez. 🙂");
 },$("cMic"),$("cLive"))};
-$("cRepeat").onclick=()=>{if(C?.mode==="say")speakSeq([{t:"¿Cómo dirías: "+C.item[0],es:1}]);else if(C?.q)speakSeq([{t:C.q[1]}])};
-$("cHint").onclick=()=>{if(C?.mode!=="say")return;const a=C.item[1][0].split(" ");const h=a.slice(0,Math.ceil(a.length/3)).join(" ");chatAdd(`Pista, porque soy buena gente: empieza con <b>“${h}…”</b>`);speakSeq([{t:h}])};
+$("cRepeat").onclick=()=>{if(C?.mode==="dialog"){speakSeq([{t:C.turn.i,rate:.9}]);return}if(C?.mode==="aichat"&&C.last){speakSeq([{t:C.last}]);return}if(C?.mode==="say")speakSeq([{t:"¿Cómo dirías: "+C.item[0],es:1}]);else if(C?.q)speakSeq([{t:C.q[1]}])};
+$("cHint").onclick=()=>{if(C?.mode==="dialog"){const t=C.turn;chatAdd(`🆘 Tranquila, te soplo: ${t.tip}<div class="ans">Puedes decir: “${t.ok[0]}” ${sayBtn(t.ok[0])}</div>${t.ok[1]?`<div class="sub">O también: “${t.ok[1]}”</div>`:""}`);speakSeq([{t:"Puedes decir:",es:1},{t:t.ok[0],rate:.9}],afterIggy);return}
+  if(C?.mode==="aichat"){chatAdd("Respóndele con lo que se te ocurra, aunque sea corto. Si no sabes cómo decir algo, toca el botón <b>?</b> y usa “¿Cómo se dice…?”.");return}
+  if(C?.mode!=="say")return;const a=C.item[1][0].split(" ");const h=a.slice(0,Math.ceil(a.length/3)).join(" ");chatAdd(`Pista, porque soy buena gente: empieza con <b>“${h}…”</b>`);speakSeq([{t:h}])};
 $("cSkip").onclick=()=>{if(activeRec){activeRec.userStop=true;activeRec.stop()}if(C?.mode==="say"&&!C.done)chatAdd(`¿Huyendo? Ok… se decía: <b>${C.item[1][0]}</b>`);newTalk()};
 $("cType").onclick=()=>{$("cTypeBox").classList.toggle("hide");$("cInput").focus()};
 $("cSend").onclick=()=>{const v=$("cInput").value.trim();if(!v)return;$("cInput").value="";handleAnswer(v)};
 $("cInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("cSend").click()}});
 $("cMode").onchange=()=>{$("chat").innerHTML="";C=null;newTalk()};
+$("cScene").onchange=()=>{$("chat").innerHTML="";C=null;newTalk()};
 $("cFlow").onchange=()=>{S.cFlow=$("cFlow").checked;save()};
 
 // ---------- Pregúntale a Iggy ----------
 const IGGY_PROMPT=`Eres Iggy, una iguana tierna y burlona que es tutora de inglés de una estudiante colombiana de ingeniería que se prepara para el examen B1. Tu humor es de molestar con cariño (sarcasmo suave, nunca cruel ni ofensivo). Responde SIEMPRE en español sencillo (salvo que te pida solo inglés), corto (máximo 150 palabras), con 1 frase de burla cariñosa al inicio, luego la explicación clara, 2 o 3 ejemplos en inglés con su traducción, y si aplica el error típico de los hispanohablantes. Si la pregunta no es sobre inglés, contesta con humor y vuelve al inglés.`;
-async function askAI(q){
+async function askAI(q,sys,history){
   const model=S.aiModel||"gemini-flash-latest";
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(S.aiKey)}`,{
     method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({systemInstruction:{parts:[{text:IGGY_PROMPT+(S.engOnly?" La estudiante ya tiene nivel avanzado: responde SOLO en inglés sencillo.":"")}]},contents:[{role:"user",parts:[{text:q}]}],generationConfig:{maxOutputTokens:700,temperature:.8}})});
+    body:JSON.stringify({systemInstruction:{parts:[{text:(sys||IGGY_PROMPT)+(S.engOnly&&!sys?" La estudiante ya tiene nivel avanzado: responde SOLO en inglés sencillo.":"")}]},contents:history||[{role:"user",parts:[{text:q}]}],generationConfig:{maxOutputTokens:700,temperature:.8}})});
   const j=await r.json();
   if(!r.ok)throw new Error(j.error?.message||("HTTP "+r.status));
   return j.candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
@@ -762,18 +799,153 @@ function localSearch(q){
   const words=norm(q).filter(w=>w.length>2&&!["que","como","the","por","para","una","con","los","las","del","cual","diferencia","entre","when","use","usa","uso","usar"].includes(w));
   const hits=[];
   GRAMMAR.forEach(g=>{const txt=(g.t+" "+g.es+" "+g.exp+" "+g.q.map(x=>x[0]+" "+x[1].join(" ")).join(" ")).toLowerCase();let sc=0;words.forEach(w=>{if(txt.includes(w))sc+=(g.t+g.es).toLowerCase().includes(w)?5:1});if(sc)hits.push({sc,g})});
-  const vh=VOCAB.filter(v=>words.some(w=>v.w.toLowerCase().includes(w)||v.lit.toLowerCase().includes(w)));
+  const vh=VOCAB.filter(v=>words.some(w=>w.length>=4&&(v.w.toLowerCase().split(/\s+/).includes(w)||v.lit.toLowerCase().split(/[\s/→()]+/).includes(w))));
   hits.sort((a,b)=>b.sc-a.sc);return {g:hits.slice(0,2).map(h=>h.g),v:vh.slice(0,2)};
 }
 async function askIggy(q){
+  const el=$("askChat");const add=(h,me,c)=>chatAdd(h,me,c,el);
   if(S.aiKey){
-    chatAdd(`<span id="aiw">Pensando… 🦎💭</span>`);
-    try{const a=await askAI(q);$("aiw").closest(".msg").remove();chatAdd(md(a),false,"ok");speakSeq([{t:a.split("\n")[0].replace(/[*#]/g,""),es:!S.engOnly}]);addDone("talk");return}
-    catch(e){$("aiw").closest(".msg").remove();chatAdd(`No pude preguntarle a la IA (${esc(e.message)}). Busco en mis explicaciones:`,false,"bad")}
+    add(`<span id="aiw">Pensando… 🦎💭</span>`);
+    try{const a=await askAI(q);$("aiw").closest(".msg").remove();add(md(a),false,"ok");speakSeq([{t:a.split("\n")[0].replace(/[*#]/g,""),es:!S.engOnly}]);return}
+    catch(e){$("aiw").closest(".msg").remove();add(`No pude preguntarle a la IA (${esc(e.message)}). Busco en mis explicaciones:`,false,"bad")}
   }
   const r=localSearch(q);
-  if(!r.g.length&&!r.v.length){chatAdd("Mmm, no encontré eso en mis explicaciones. Prueba con palabras clave como “past perfect”, “should have”, “although”… o activa la IA gratis en ⚙️ Ajustes para preguntarme lo que sea.",false,"bad");return}
-  chatAdd("Esto es lo que tengo sobre eso:"+r.g.map(g=>`<div style="margin-top:8px"><b>${g.t}</b> (${g.es})${g.exp}<a href="#" onclick="show('b1');openTopic('${g.id}');return false">Practicar este tema →</a></div>`).join("")+r.v.map(v=>`<div style="margin-top:8px"><b>${v.w}</b> = ${v.lit}<br><i>${v.ex}</i></div>`).join(""),false,"ok");
+  if(!r.g.length&&!r.v.length){add("Mmm, no encontré eso en mis explicaciones. Prueba con palabras clave como “past perfect”, “should have”, “although”… Si quieres que te responda <b>cualquier</b> pregunta, pega tu clave gratis de Google en ⚙️ Ajustes.",false,"bad");return}
+  add("Esto es lo que tengo sobre eso:"+r.g.map(g=>`<div style="margin-top:8px"><b>${g.t}</b> (${g.es})${g.exp}<a href="#" onclick="closeAsk();show('b1');openTopic('${g.id}');return false">Practicar este tema →</a></div>`).join("")+r.v.map(v=>`<div style="margin-top:8px"><b>${v.w}</b> = ${v.lit}<br><i>${v.ex}</i> ${sayBtn(v.ex)}</div>`).join(""),false,"ok");
+}
+
+// ---------- ¿Cómo se dice…? ----------
+const HOW_PROMPT=`Eres Iggy, una iguana tutora de inglés, burlona pero cariñosa. La estudiante (colombiana, nivel B1) escribe en español algo que quiere decir en inglés. Responde en este formato, corto:
+**Se dice:** (la forma más natural en inglés)
+**También puedes decir:** (1 alternativa, más formal o más informal, indica cuál)
+**Pronunciación aproximada:** (cómo suena, escrito para hispanohablantes)
+**Por qué:** (1-2 frases en español explicando la gramática o palabra clave, y el error típico de los hispanohablantes si aplica)
+Si escribe en inglés, corrígelo y explica. Empieza con una frase corta de burla cariñosa.`;
+async function howSay(q){
+  const el=$("askChat");const add=(h,me,c)=>chatAdd(h,me,c,el);
+  if(S.aiKey){
+    add(`<span id="aiw">Buscando la mejor forma… 🦎💭</span>`);
+    try{const a=await askAI(q,HOW_PROMPT);$("aiw").closest(".msg").remove();
+      const m=a.match(/Se dice:\**\s*(.+)/i);const en=m?m[1].replace(/[*"“”]/g,"").trim():"";
+      add(md(a)+(en?practiceBtns(en):""),false,"ok");if(en)speakSeq([{t:"Se dice:",es:1},{t:en,rate:.9}]);return}
+    catch(e){$("aiw").closest(".msg").remove();add(`La IA no respondió (${esc(e.message)}). Uso el traductor gratis:`,false,"bad")}
+  }
+  // 1) ¿lo tengo en mis frases?
+  const nq=q.toLowerCase().normalize("NFD").replace(/[̀-ͯ¿?¡!.,]/g,"").trim();
+  const mine=[...CONVO.map(c=>[c[0],c[1][0],c[2]]),...PHRASES.map(p=>[p[2],p[1],""]),...DIALOGUES.flatMap(d=>d.turns.map(t=>[t.es,t.i,""]))]
+    .find(x=>x[0].toLowerCase().normalize("NFD").replace(/[̀-ͯ¿?¡!.,]/g,"").trim()===nq);
+  if(mine){add(`Esa me la sé de memoria 😎<div class="ans">Se dice: “${mine[1]}”</div>${mine[2]?`<div>💡 ${mine[2]}</div>`:""}${practiceBtns(mine[1])}`,false,"ok");speakSeq([{t:"Se dice:",es:1},{t:mine[1],rate:.9}]);return}
+  // 2) traductor gratis por internet (MyMemory)
+  add(`<span id="aiw">Traduciendo… 🦎</span>`);
+  try{
+    const r=await fetch("https://api.mymemory.translated.net/get?langpair=es|en&q="+encodeURIComponent(q.slice(0,450)));
+    const j=await r.json();$("aiw").closest(".msg").remove();
+    const en=(j.responseData&&j.responseData.translatedText||"").trim();
+    if(!en||/MYMEMORY WARNING|QUERY LENGTH/i.test(en))throw new Error("límite diario del traductor");
+    const alts=[...new Set((j.matches||[]).map(m=>m.translation).filter(t=>t&&t.toLowerCase()!==en.toLowerCase()))].slice(0,2);
+    add(`${rnd(["Fácil. Hasta yo con mis patitas lo traduzco:","Anota, que no lo voy a repetir… mentira, sí lo repito:","Mira, así se dice:"])}<div class="ans">“${esc(en)}”</div>${alts.length?`<div class="sub">Otras formas: ${alts.map(esc).join(" · ")}</div>`:""}${practiceBtns(en)}<div class="sub" style="margin-top:6px">Traducción automática gratis: puede no ser perfecta. Con tu clave de Google en ⚙️ Ajustes te doy también la explicación.</div>`,false,"ok");
+    speakSeq([{t:"Se dice:",es:1},{t:en,rate:.9}]);
+  }catch(e){const w=$("aiw");if(w)w.closest(".msg").remove();add(`No pude traducir (${esc(e.message||"sin internet")}). Revisa tu conexión e intenta de nuevo.`,false,"bad")}
+}
+function practiceBtns(en){const j=JSON.stringify(en).replace(/"/g,"&quot;");return `<div class="row" style="margin-top:8px;gap:6px"><button class="sec" style="min-height:40px;padding:6px 12px" onclick="speak(${j},.9)">🔊 Oír</button><button class="sec" style="min-height:40px;padding:6px 12px" onclick="speak(${j},.6)">🐢 Lento</button><button class="sec" style="min-height:40px;padding:6px 12px" onclick="practiceSay(${j},this)">🎤 Dilo tú</button></div>`}
+function practiceSay(en,btn){
+  listen(a=>{const r=compare(en,a[0]);const ok=r.score>=80;
+    chatAdd(`${esc(a[0])}`,true,"",$("askChat"));
+    chatAdd(`${ok?rnd(["¡Eso! Sonaste muy bien. 👏","Perfecto, ya te la sabes."]):rnd(["Casi… mira las palabras en rojo y repite:","Mmm, otra vez, más despacio:"])}<div>${wordsHTML(en,r.marks)}</div>`,false,ok?"ok":"bad",$("askChat"));iggySay(ok);
+  },err=>{if(err==="no-speech")chatAdd("No te escuché. Toca 🎤 Dilo tú otra vez.",false,"",$("askChat"))},btn,$("askLive"));
+}
+
+// ---------- Panel del botón ? ----------
+let askTab="how";
+function openAsk(tab){
+  askTab=tab||askTab;$("askPanel").classList.remove("hide");document.body.style.overflow="hidden";
+  document.querySelectorAll("#askPanel .tab").forEach(b=>b.classList.toggle("act",b.dataset.t===askTab));
+  $("askIntro").innerHTML=askTab==="how"
+    ?"Escribe o dime en <b>español</b> lo que quieres decir y te digo cómo se dice en inglés. Ej: <i>“¿me puede dar la cuenta?”</i>"
+    :"Pregúntame lo que quieras: gramática, vocabulario, diferencias entre palabras… Ej: <i>“¿cuándo uso since y cuándo for?”</i>"+(S.aiKey?"":"<br><span class='sub'>Sin clave de IA busco en mis explicaciones. Para respuestas a cualquier pregunta, pega tu clave gratis de Google en ⚙️ Ajustes.</span>");
+  $("askInput").placeholder=askTab==="how"?"¿Cómo se dice… (en español)":"Escribe tu pregunta…";
+  if(!$("askChat").children.length)chatAdd("¡Hola! ¿En qué te ayudo hoy? Prometo burlarme solo un poquito. 🦎",false,"",$("askChat"));
+  setTimeout(()=>$("askInput").focus(),100);
+}
+function closeAsk(){$("askPanel").classList.add("hide");document.body.style.overflow="";if(activeRec){activeRec.userStop=true;activeRec.stop()}}
+$("askFab").onclick=()=>openAsk();
+$("askClose").onclick=closeAsk;
+$("askPanel").addEventListener("click",e=>{if(e.target.id==="askPanel")closeAsk()});
+document.querySelectorAll("#askPanel .tab").forEach(b=>b.onclick=()=>openAsk(b.dataset.t));
+function askSubmit(text){
+  const q=(text||$("askInput").value).trim();if(!q)return;$("askInput").value="";
+  chatAdd(esc(q),true,"",$("askChat"));
+  askTab==="how"?howSay(q):askIggy(q);
+}
+$("askSend").onclick=()=>askSubmit();
+$("askInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();askSubmit()}});
+// el micrófono del panel escucha en español para "¿Cómo se dice?" y en español también para preguntas
+$("askMic").onclick=()=>{const prev=S.accent;S.accent="es-CO";
+  const r=listen(a=>askSubmit(a[0]),()=>{},$("askMic"),$("askLive"));S.accent=prev;};
+
+// ---------- Conversaciones diarias (juego de roles) ----------
+function fillScenes(){
+  const sel=$("cScene");if(sel.options.length)return;
+  sel.innerHTML=`<option value="rand">🎲 Una al azar</option>`+DIALOGUES.map(d=>`<option value="${d.id}">${d.t}</option>`).join("")+`<option value="ai">🤖 Conversación libre con IA${S.aiKey?"":" (necesita clave)"}</option>`;
+}
+function dialogNext(){
+  fillScenes();
+  if(C&&C.mode==="dialog"&&C.k<C.d.turns.length){return dialogTurn()}
+  let id=$("cScene").value;
+  if(id==="ai")return aiChatStart();
+  const d=id==="rand"?rnd(DIALOGUES.filter(x=>x.id!==C?.d?.id)):DIALOGUES.find(x=>x.id===id);
+  C={mode:"dialog",d,k:0,good:0};
+  chatAdd(`<b>${d.t}</b><div class="sub">${d.role}. Respóndele como en la vida real. Si no sabes qué decir, toca 🆘.</div>`);
+  dialogTurn();
+}
+function dialogTurn(){
+  const t=C.d.turns[C.k];C.turn=t;C.tries=0;
+  chatAdd(`${esc(t.i)} ${sayBtn(t.i)}<div class="sub es">${t.es}</div>`);
+  speakSeq([{t:t.i,rate:.95}],afterIggy);
+}
+function dialogAnswer(said){
+  const t=C.turn;const w=norm(said);
+  const best=Math.max(...t.ok.map(o=>compare(o,said).score));
+  const kw=t.kw.filter(k=>w.includes(norm(k)[0]||k)).length;
+  const good=best>=60||(kw>=1&&w.length>=2);
+  C.tries++;
+  if(good){
+    const roast=rnd(["¡Bien! Sonaste como nativa… bueno, casi. 😏","Perfecto, nadie notó que eres de Bogotá.","Eso. Respuesta de persona funcional. 👏","¡Bien dicho! Ni yo lo hubiera dicho mejor (y soy una iguana bilingüe).","Ok, eso estuvo bien. No te emociones."]);
+    chatAdd(`${roast}${best<85?`<div class="sub" style="margin-top:4px">Otra forma natural: “${t.ok[0]}”</div>`:""}`,false,"ok");
+    C.good++;C.k++;addDone("talk");save();
+    speakSeq([{t:roast,es:1}],()=>{if(C.k<C.d.turns.length)setTimeout(dialogTurn,400);else dialogEnd()});
+  }else{
+    chatAdd(`<span id="ltc">Mmm… déjame revisar 🧐</span>`);
+    grammarCheck(said).then(m=>{
+      const el=$("ltc");if(el)el.closest(".msg").remove();
+      const roast=rnd(["Eso no tiene mucho que ver con lo que te pregunté, ¿eh? 🙄","¿Me estás respondiendo a mí o a otra iguana?","Interesante respuesta… para otra pregunta.","Casi… pero la persona real te miraría raro."]);
+      chatAdd(`${roast}${m&&m.length?ltHTML(said,m):""}<div style="margin-top:6px">💡 ${t.tip}</div><div class="ans">Podrías decir: “${t.ok[0]}” ${sayBtn(t.ok[0])}</div><div class="sub">Repítela tú ahora. 🎤</div>`,false,"bad");
+      speakSeq([{t:roast,es:1},{t:"Podrías decir:",es:1},{t:t.ok[0],rate:.9}],()=>{if(C.tries>=2){C.k++;addDone("talk");if(C.k<C.d.turns.length)setTimeout(dialogTurn,400);else dialogEnd()}else afterIggy()});
+    });
+  }
+}
+function dialogEnd(){
+  const n=C.d.turns.length;const msg=C.good===n?`¡Conversación completa sin ayuda! ${C.good} de ${n}. Ya puedes ir a ese lugar sin hacer el oso. 🎉`:`Terminamos: ${C.good} de ${n} respuestas bien a la primera. Repite esta conversación hasta que te salga fluida.`;
+  chatAdd(msg+`<div class="row" style="margin-top:8px"><button class="sec" onclick="C.k=0;C.good=0;dialogTurn()">🔁 Repetir</button><button class="sec" onclick="C=null;$('cScene').value='rand';newTalk()">➡️ Otra conversación</button></div>`,false,"ok");
+  speakSeq([{t:msg,es:1}]);C.k=C.d.turns.length;
+  if(daily.active)cTimer=setTimeout(nextDaily,2500);
+}
+// Conversación libre con IA (si hay clave)
+const CHAT_PROMPT=`You are Iggy, a cute but sassy iguana who chats with a Colombian engineering student (B1 level) to practice everyday English. Keep a natural daily conversation (greetings, plans, food, work, university, shopping…). Each reply: 1) one short natural line in English answering her and asking ONE follow-up question (max 25 words, B1 level); 2) if her last message had mistakes, add a new line starting with "💡" in Spanish: tease her affectionately in one short sentence and give the corrected sentence and a 1-line explanation. If she had no mistakes, don't add the 💡 line.`;
+function aiChatStart(){
+  if(!S.aiKey){chatAdd("Para charlar libremente conmigo necesito tu clave gratis de Google (⚙️ Ajustes). Mientras tanto, elige una de las conversaciones de la lista. 🦎",false,"bad");return}
+  C={mode:"aichat",hist:[]};const first="Hi! I'm Iggy. How's your day going so far?";
+  C.hist.push({role:"model",parts:[{text:first}]});C.last=first;chatAdd(first+" "+sayBtn(first));speakSeq([{t:first}],afterIggy);
+}
+async function aiChatAnswer(said){
+  C.hist.push({role:"user",parts:[{text:said}]});
+  chatAdd(`<span id="aiw">…</span>`);
+  try{const a=await askAI("",CHAT_PROMPT,C.hist.slice(-12));$("aiw").closest(".msg").remove();
+    C.hist.push({role:"model",parts:[{text:a}]});
+    const [line,...rest]=a.split("💡");C.last=line.trim();
+    chatAdd(md(line.trim())+" "+sayBtn(line.trim())+(rest.length?`<div class="fbline">💡 ${md(rest.join(" ").trim())}</div>`:""),false,rest.length?"bad":"ok");
+    addDone("talk");speakSeq([{t:line.trim()}],afterIggy);
+  }catch(e){$("aiw").closest(".msg").remove();chatAdd(`La IA no respondió (${esc(e.message)}).`,false,"bad")}
 }
 
 // ---------- Vocabulario diario ----------
@@ -1041,7 +1213,7 @@ function nextDaily(){
   const order=["vocab","b1","talk","listen","read","write","b1","speak"];
   let v=order[daily.i++%order.length];
   if(v==="vocab"&&S.vToday&&S.vToday.day===today()&&S.vToday.done)v=order[daily.i++%order.length];
-  if(v==="talk"){show("talk");$("cMode").value="say";$("chat").innerHTML="";C=null;newTalk();return}
+  if(v==="talk"){show("talk");$("cMode").value=Math.random()<.5?"dialog":"say";$("chat").innerHTML="";C=null;newTalk();return}
   if(v==="b1"){const t=plan().today;show("b1");if(t.length)openTopic(t[(daily.i>>2)%t.length].id);else $("mockBtn").click();return}
   show(v);
 }
