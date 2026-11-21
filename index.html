@@ -108,6 +108,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 .tabs{display:flex;gap:8px;margin:12px 0 4px}
 .tab{flex:1;background:var(--bg);color:var(--ink);border:2px solid var(--line);font-size:15px;padding:10px 6px}
 .tab.act{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip{background:var(--card);color:var(--ink);border:2px solid var(--bad);border-radius:999px;padding:4px 12px;min-height:36px;font-size:15px;margin:2px}
 .fbline{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bad)}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
@@ -582,13 +583,13 @@ function listen(onResult,onEnd,btn,hintEl){
   if(!SR){const n=$("noSR");if(n)n.classList.remove("hide");alert("Para usar el micrófono abre la app en Google Chrome.");return null}
   if(activeRec){activeRec.userStop=true;try{activeRec.stop()}catch(e){};return null}
   const r=new SR();r.lang=S.accent;r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
-  let base="",cur="",interim="";const t0=Date.now();r.userStop=false;
+  let base="",cur="",interim="";const t0=Date.now();r.userStop=false;const confs=[];
   const icon=btn.textContent;
   const show=()=>{if(hintEl){hintEl.classList.remove("hide");hintEl.innerHTML=(joinTxt(base,cur,interim)?"🎙️ "+esc(joinTxt(base,cur,interim)):"🎙️ Te escucho… habla con calma, puedes hacer pausas.")+"<div class='sub'>Toca ⏹️ cuando termines.</div>"}};
   r.onresult=e=>{
     let fin="";interim="";
     for(let i=0;i<e.results.length;i++){const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal){ // algunos Android repiten el texto acumulado: lo evitamos
+      if(e.results[i].isFinal){if(e.results[i][0].confidence>0)confs[i]=e.results[i][0].confidence; // algunos Android repiten el texto acumulado: lo evitamos
         const a=fin.trim().toLowerCase(),b=t.trim().toLowerCase();
         fin=b.startsWith(a)?t:(a.endsWith(b)?fin:fin+" "+t);
       } else interim+=t}
@@ -601,7 +602,8 @@ function listen(onResult,onEnd,btn,hintEl){
     const text=joinTxt(base,interim);activeRec=null;btn.classList.remove("on");btn.textContent=icon;
     if(hintEl)hintEl.classList.add("hide");
     if(r.denied){onEnd("not-allowed");return}
-    if(text)onResult([text]);onEnd(text?undefined:"no-speech");
+    const cv=confs.filter(Boolean);const conf=cv.length?cv.reduce((a,b)=>a+b,0)/cv.length:0;
+    if(text)onResult([text],conf);onEnd(text?undefined:"no-speech");
   };
   speechSynthesis.cancel();activeRec=r;btn.classList.add("on");btn.textContent="⏹️";show();
   try{r.start()}catch(e){activeRec=null;btn.classList.remove("on");btn.textContent=icon}
@@ -735,39 +737,90 @@ function newTalk(){
     speakSeq([{t:q[1]}],afterIggy);
   }
 }
-function handleAnswer(said){
+// ---------- Iggy te corrige: redacción + pronunciación + repetir de otra forma ----------
+function applyFixes(text,m){
+  let out=text;[...m].sort((a,b)=>b.offset-a.offset).forEach(x=>{const rep=x.replacements&&x.replacements[0];if(rep)out=out.slice(0,x.offset)+rep.value+out.slice(x.offset+x.length)});
+  return out;
+}
+async function getVariation(a){
+  if(!S.aiKey)return null;
+  try{const v=await askAI(`Rewrite this English sentence in ONE different natural way with the same meaning (change some words or the structure, B1 level). Reply with ONLY the new sentence: ${a}`,"You rewrite English sentences. Reply with only the sentence.");
+    return v.split("\n")[0].replace(/["“”*]/g,"").trim()||null}catch(e){return null}
+}
+const wordChips=ws=>ws.map(w=>`<button class="chip" onclick="speak('${w.replace(/'/g,"\\'")}',.7)">🔊 ${esc(w)}</button>`).join(" ");
+function missedWords(target,marks){const raw=target.split(/\s+/);return raw.filter((w,i)=>marks[Math.min(i,marks.length-1)]===false).map(w=>w.replace(/[^A-Za-z']/g,"")).filter(w=>w.length>1)}
+// opts: said, conf, target (frase correcta esperada o null), alts, meaningOK, tip, why, onDone, okRoast
+async function coach(o){
+  chatAdd(`<span id="ltc">Revisando tu redacción y pronunciación… 🧐</span>`);
+  const m=norm(o.said).length>=2?await grammarCheck(o.said):[];
+  const el=$("ltc");if(el)el.closest(".msg").remove();
+  const grammarOK=!(m&&m.length);const fixed=grammarOK?null:applyFixes(o.said,m);
+  let cmp=null,missed=[];
+  if(o.target){cmp=compare(o.target,o.said);if(cmp.score>=60&&cmp.score<100)missed=missedWords(o.target,cmp.marks)}
+  const lowConf=o.conf&&o.conf>0&&o.conf<0.65;
+  const pronOK=!missed.length&&!lowConf;
+  if(o.meaningOK&&grammarOK&&pronOK){
+    const roast=o.okRoast||rnd(ROAST_OK);
+    chatAdd(`${roast}<div style="margin-top:6px">✍️ Redacción: ✅ &nbsp; 🗣️ Pronunciación: ✅</div>${m===null?"<div class='sub'>(Sin internet no pude revisar la gramática a fondo.)</div>":""}`,false,"ok");
+    speakSeq([{t:roast,es:1}],()=>o.onDone(true));return;
+  }
+  const correct=(o.meaningOK&&fixed)?fixed:(o.target&&!o.meaningOK?o.target:(fixed||o.target||o.said));
+  const roast=o.meaningOK?rnd(ROAST_MID):rnd(ROAST_BAD);
+  let h=`${roast}`;
+  if(!o.meaningOK&&o.tip)h+=`<div style="margin-top:8px">💬 ${o.tip}</div>`;
+  h+=`<div style="margin-top:8px"><b>✍️ Redacción:</b> ${grammarOK?(o.meaningOK?"✅ Bien construida.":"—"):"tiene errores 👇"}</div>`;
+  if(!grammarOK)h+=ltHTML(o.said,m);
+  if(o.why&&!o.meaningOK)h+=`<div style="margin-top:6px">💡 ${o.why}</div>`;
+  h+=`<div style="margin-top:8px"><b>🗣️ Pronunciación:</b> `+(missed.length?`estas palabras no se te entendieron bien. Tócalas para oírlas y repítelas: <div style="margin-top:4px">${wordChips(missed)}</div>`:lowConf?"se te entendió con dificultad. Habla un poco más despacio y vocaliza cada palabra.":"✅ se te entendió bien.")+`</div>`;
+  if(cmp&&missed.length)h+=`<div style="margin-top:4px">${wordsHTML(o.target,cmp.marks)}</div>`;
+  h+=`<div class="ans">✅ Así se dice correctamente: “${esc(correct)}” ${sayBtn(correct)}</div>`;
+  chatAdd(h,false,"bad");
+  let v=await getVariation(correct);
+  if(!v)v=(o.alts||[]).find(x=>norm(x).join(" ")!==norm(correct).join(" "));
+  const different=v&&norm(v).join(" ")!==norm(correct).join(" ");
+  const target=different?v:correct;
+  const ask=different?"Ahora repítela, pero de esta otra forma:":"Ahora repítela tú, bien dicha:";
+  chatAdd(`🔁 ${ask}<div class="ans">“${esc(target)}” ${sayBtn(target)}</div><div class="sub">Toca 🎤 y dila. No seguimos hasta que te salga. 😈</div>`);
+  C.drill={target,tries:0,onDone:o.onDone};
+  speakSeq([{t:roast,es:1},{t:"Así se dice:",es:1},{t:correct,rate:.9},{t:ask,es:1},{t:target,rate:.85}],afterIggy);
+}
+function drillAnswer(said,conf){
+  const d=C.drill;const r=compare(d.target,said);const missed=missedWords(d.target,r.marks);
+  if(r.score>=85&&!(conf&&conf>0&&conf<0.5)){
+    const p=rnd(["¡Ahora sí! Eso sonó a inglés de verdad. 👏","Mucho mejor. ¿Ves que sí podías?","¡Eso! Ya te la sabes. Sigamos."]);
+    chatAdd(p+(missed.length?`<div class="sub">Casi perfecta. Repasa: ${wordChips(missed)}</div>`:""),false,"ok");
+    C.drill=null;speakSeq([{t:p,es:1}],()=>d.onDone(false));return;
+  }
+  d.tries++;
+  if(d.tries>=3){const p="Ok, por hoy la dejamos así, pero la vamos a seguir practicando. Escúchala una vez más:";
+    chatAdd(`${p}<div class="ans">“${esc(d.target)}” ${sayBtn(d.target)}</div>`,false,"bad");C.drill=null;
+    speakSeq([{t:p,es:1},{t:d.target,rate:.8}],()=>d.onDone(false));return}
+  const p=rnd(["Todavía no. Mira las palabras en rojo:","Casi… otra vez, más despacio:","Uy, se te enredó la lengua. De nuevo:"]);
+  chatAdd(`${p}<div style="margin-top:4px">${wordsHTML(d.target,r.marks)}</div>${missed.length?`<div style="margin-top:4px">${wordChips(missed)}</div>`:""}`,false,"bad");
+  speakSeq([{t:p,es:1},{t:d.target,rate:.8}],afterIggy);
+}
+
+function handleAnswer(said,conf){
   if(!C)return;chatAdd(esc(said),true);
-  if(C.mode==="dialog")return dialogAnswer(said);
+  if(C.drill)return drillAnswer(said,conf);
+  if(C.mode==="dialog")return dialogAnswer(said,conf);
   if(C.mode==="aichat")return aiChatAnswer(said);
   if(C.mode==="say"){
     const [es,answers,why,tid]=C.item;let best={score:-1};
     answers.forEach(a=>{const r=compare(a,said);if(r.score>best.score)best={...r,a}});
-    C.tries++;const g=GRAMMAR.find(x=>x.id===tid);
-    const link=g?`<div class="sub">Tema: <a href="#" onclick="show('b1');openTopic('${tid}');return false">${g.t}</a></div>`:"";
-    if(best.score>=85){
-      const roast=rnd(ROAST_OK);S.cw[C.i]=0;C.done=true;
-      chatAdd(`${roast}<div class="ans">✅ ${best.a}</div>`,false,"ok");
-      speakSeq([{t:roast,es:1},{t:best.a}],next);addDone("talk");
-    } else {
-      const roast=best.score>=55?rnd(ROAST_MID):rnd(ROAST_BAD);S.cw[C.i]=(S.cw[C.i]||0)+1;
-      chatAdd(`${roast}<div style="margin-top:6px">${wordsHTML(best.a,best.marks)}</div><div class="ans">✅ Se dice: ${best.a}</div><div style="margin-top:6px">💡 ${why}</div>${link}<div class="sub" style="margin-top:4px">Repítela en voz alta para que se te quede.</div>`,false,"bad");
-      speakSeq([{t:roast,es:1},{t:"Se dice:",es:1},{t:best.a,rate:.9}],()=>{if(C.tries<2){chatAdd("Dale, repítela tú. 🎤");speakSeq([{t:"Dale, repítela tú.",es:1}],afterIggy)}else{C.done=true;addDone("talk");next()}});
-    }
-    save();return;
+    const g=GRAMMAR.find(x=>x.id===tid);
+    coach({said,conf,target:best.a,alts:answers,meaningOK:best.score>=85,
+      why:why+(g?` <a href="#" onclick="show('b1');openTopic('${tid}');return false">Ver tema: ${g.t}</a>`:""),
+      onDone:perfect=>{S.cw[C.i]=perfect?0:(S.cw[C.i]||0)+1;C.done=true;addDone("talk");save();next()}});
+    return;
   }
-  // preguntas libres: revisamos gramática por internet
+  // preguntas libres
   const n=norm(said).length;
   if(n<5){const r=rnd(["¿Eso fue todo? Mi abuela escribe mensajes más largos. Dime al menos una frase completa.","¿Respuesta de telegrama? Dame más palabras, que no se cobran."]);chatAdd(r,false,"bad");speakSeq([{t:r,es:1}],afterIggy);return}
-  chatAdd(`<span id="ltc">Déjame revisar tu gramática… 🧐</span>`);
-  grammarCheck(said).then(m=>{
-    const el=$("ltc");if(el)el.closest(".msg").remove();
-    if(m&&m.length){const roast=rnd(ROAST_BAD);chatAdd(roast+ltHTML(said,m),false,"bad");speakSeq([{t:roast,es:1}],next)}
-    else{const roast=rnd(ROAST_OK);chatAdd(roast+(m===null?"<div class='sub'>(Sin internet no pude revisar la gramática en detalle.)</div>":""),false,"ok");speakSeq([{t:roast,es:1}],next)}
-    addDone("talk");
-  });
+  coach({said,conf,target:null,meaningOK:true,onDone:()=>{addDone("talk");next()}});
 }
 function next(){if(daily.active){cTimer=setTimeout(nextDaily,1800);return}if(cFlowOn()&&!$("v-talk").classList.contains("hide"))cTimer=setTimeout(newTalk,1200);else chatAdd("Toca ⏭️ cuando quieras otra.")}
-$("cMic").onclick=()=>{listen(a=>handleAnswer(a[0]),err=>{
+$("cMic").onclick=()=>{listen((a,conf)=>handleAnswer(a[0],conf),err=>{
   if(err==="not-allowed")chatAdd("Necesito permiso para usar el micrófono. Toca el candado 🔒 de Chrome y permite el micrófono.",false,"bad");
   else if(err==="no-speech")chatAdd("No te escuché nada. ¿Te dio pena? Toca 🎤 otra vez. 🙂");
 },$("cMic"),$("cLive"))};
@@ -775,7 +828,7 @@ $("cRepeat").onclick=()=>{if(C?.mode==="dialog"){speakSeq([{t:C.turn.i,rate:.9}]
 $("cHint").onclick=()=>{if(C?.mode==="dialog"){const t=C.turn;chatAdd(`🆘 Tranquila, te soplo: ${t.tip}<div class="ans">Puedes decir: “${t.ok[0]}” ${sayBtn(t.ok[0])}</div>${t.ok[1]?`<div class="sub">O también: “${t.ok[1]}”</div>`:""}`);speakSeq([{t:"Puedes decir:",es:1},{t:t.ok[0],rate:.9}],afterIggy);return}
   if(C?.mode==="aichat"){chatAdd("Respóndele con lo que se te ocurra, aunque sea corto. Si no sabes cómo decir algo, toca el botón <b>?</b> y usa “¿Cómo se dice…?”.");return}
   if(C?.mode!=="say")return;const a=C.item[1][0].split(" ");const h=a.slice(0,Math.ceil(a.length/3)).join(" ");chatAdd(`Pista, porque soy buena gente: empieza con <b>“${h}…”</b>`);speakSeq([{t:h}])};
-$("cSkip").onclick=()=>{if(activeRec){activeRec.userStop=true;activeRec.stop()}if(C?.mode==="say"&&!C.done)chatAdd(`¿Huyendo? Ok… se decía: <b>${C.item[1][0]}</b>`);newTalk()};
+$("cSkip").onclick=()=>{if(activeRec){activeRec.userStop=true;activeRec.stop()}if(C)C.drill=null;if(C?.mode==="say"&&!C.done)chatAdd(`¿Huyendo? Ok… se decía: <b>${C.item[1][0]}</b>`);newTalk()};
 $("cType").onclick=()=>{$("cTypeBox").classList.toggle("hide");$("cInput").focus()};
 $("cSend").onclick=()=>{const v=$("cInput").value.trim();if(!v)return;$("cInput").value="";handleAnswer(v)};
 $("cInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("cSend").click()}});
@@ -903,26 +956,14 @@ function dialogTurn(){
   chatAdd(`${esc(t.i)} ${sayBtn(t.i)}<div class="sub es">${t.es}</div>`);
   speakSeq([{t:t.i,rate:.95}],afterIggy);
 }
-function dialogAnswer(said){
+function dialogAnswer(said,conf){
   const t=C.turn;const w=norm(said);
-  const best=Math.max(...t.ok.map(o=>compare(o,said).score));
+  let best={score:-1};t.ok.forEach(o=>{const r=compare(o,said);if(r.score>best.score)best={...r,a:o}});
   const kw=t.kw.filter(k=>w.includes(norm(k)[0]||k)).length;
-  const good=best>=60||(kw>=1&&w.length>=2);
-  C.tries++;
-  if(good){
-    const roast=rnd(["¡Bien! Sonaste como nativa… bueno, casi. 😏","Perfecto, nadie notó que eres de Bogotá.","Eso. Respuesta de persona funcional. 👏","¡Bien dicho! Ni yo lo hubiera dicho mejor (y soy una iguana bilingüe).","Ok, eso estuvo bien. No te emociones."]);
-    chatAdd(`${roast}${best<85?`<div class="sub" style="margin-top:4px">Otra forma natural: “${t.ok[0]}”</div>`:""}`,false,"ok");
-    C.good++;C.k++;addDone("talk");save();
-    speakSeq([{t:roast,es:1}],()=>{if(C.k<C.d.turns.length)setTimeout(dialogTurn,400);else dialogEnd()});
-  }else{
-    chatAdd(`<span id="ltc">Mmm… déjame revisar 🧐</span>`);
-    grammarCheck(said).then(m=>{
-      const el=$("ltc");if(el)el.closest(".msg").remove();
-      const roast=rnd(["Eso no tiene mucho que ver con lo que te pregunté, ¿eh? 🙄","¿Me estás respondiendo a mí o a otra iguana?","Interesante respuesta… para otra pregunta.","Casi… pero la persona real te miraría raro."]);
-      chatAdd(`${roast}${m&&m.length?ltHTML(said,m):""}<div style="margin-top:6px">💡 ${t.tip}</div><div class="ans">Podrías decir: “${t.ok[0]}” ${sayBtn(t.ok[0])}</div><div class="sub">Repítela tú ahora. 🎤</div>`,false,"bad");
-      speakSeq([{t:roast,es:1},{t:"Podrías decir:",es:1},{t:t.ok[0],rate:.9}],()=>{if(C.tries>=2){C.k++;addDone("talk");if(C.k<C.d.turns.length)setTimeout(dialogTurn,400);else dialogEnd()}else afterIggy()});
-    });
-  }
+  const good=best.score>=60||(kw>=1&&w.length>=2);
+  const okRoast=rnd(["¡Bien! Sonaste como nativa… bueno, casi. 😏","Perfecto, nadie notó que eres de Bogotá.","Eso. Respuesta de persona funcional. 👏","¡Bien dicho! Ni yo lo hubiera dicho mejor (y soy una iguana bilingüe).","Ok, eso estuvo bien. No te emociones."]);
+  coach({said,conf,target:best.a,alts:t.ok,meaningOK:good,tip:t.tip,okRoast,
+    onDone:perfect=>{if(perfect)C.good++;C.k++;addDone("talk");save();if(C.k<C.d.turns.length)setTimeout(dialogTurn,400);else dialogEnd()}});
 }
 function dialogEnd(){
   const n=C.d.turns.length;const msg=C.good===n?`¡Conversación completa sin ayuda! ${C.good} de ${n}. Ya puedes ir a ese lugar sin hacer el oso. 🎉`:`Terminamos: ${C.good} de ${n} respuestas bien a la primera. Repite esta conversación hasta que te salga fluida.`;
