@@ -109,6 +109,10 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 .tab{flex:1;background:var(--bg);color:var(--ink);border:2px solid var(--line);font-size:15px;padding:10px 6px}
 .tab.act{background:var(--pri);color:#fff;border-color:var(--pri)}
 .chip{background:var(--card);color:var(--ink);border:2px solid var(--bad);border-radius:999px;padding:4px 12px;min-height:36px;font-size:15px;margin:2px}
+.vbox{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.vrow{display:flex;align-items:center;gap:6px;font-size:15px}
+.ideas{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.idea{display:flex;align-items:center;gap:4px;font-size:15px;font-style:italic}
 .fbline{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bad)}
 .tag{display:inline-block;font-size:12px;background:var(--pri2);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 </style>
@@ -219,7 +223,8 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
     </div>
     <div id="cTypeBox" class="hide" style="margin-top:10px"><textarea id="cInput" placeholder="Escribe tu respuesta en inglés..."></textarea><button id="cSend" style="margin-top:6px">Enviar</button></div>
     <button class="ghost" onclick="show('speak')" style="margin-top:8px">🗣️ Practicar pronunciación repitiendo frases →</button>
-    <label style="display:flex;gap:10px;align-items:center;font-weight:500;margin-top:12px"><input type="checkbox" id="cFlow" style="width:22px;height:22px"> Conversación continua (Iggy pregunta y abre el micrófono sola)</label>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:500;margin-top:12px"><input type="checkbox" id="cIdeas" style="width:22px;height:22px"> Mostrar ideas de respuesta en las conversaciones diarias</label>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:500;margin-top:8px"><input type="checkbox" id="cFlow" style="width:22px;height:22px"> Conversación continua (Iggy pregunta y abre el micrófono sola)</label>
   </div>
 </section>
 
@@ -400,6 +405,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--pri);margin-top:10px}
 <script src="vocab.js"></script>
 <script src="convo.js"></script>
 <script src="dialogues.js"></script>
+<script src="dialogues2.js"></script>
 <script>
 // ---------- Contenido ----------
 // [nivel, inglés, español]
@@ -835,6 +841,7 @@ $("cInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.pr
 $("cMode").onchange=()=>{$("chat").innerHTML="";C=null;newTalk()};
 $("cScene").onchange=()=>{$("chat").innerHTML="";C=null;newTalk()};
 $("cFlow").onchange=()=>{S.cFlow=$("cFlow").checked;save()};
+$("cIdeas").onchange=()=>{S.cIdeas=$("cIdeas").checked;save()};
 
 // ---------- Pregúntale a Iggy ----------
 const IGGY_PROMPT=`Eres Iggy, una iguana tierna y burlona que es tutora de inglés de una estudiante colombiana de ingeniería que se prepara para el examen B1. Tu humor es de molestar con cariño (sarcasmo suave, nunca cruel ni ofensivo). Responde SIEMPRE en español sencillo (salvo que te pida solo inglés), corto (máximo 150 palabras), con 1 frase de burla cariñosa al inicio, luego la explicación clara, 2 o 3 ejemplos en inglés con su traducción, y si aplica el error típico de los hispanohablantes. Si la pregunta no es sobre inglés, contesta con humor y vuelve al inglés.`;
@@ -948,19 +955,19 @@ function dialogNext(){
   if(id==="ai")return aiChatStart();
   const d=id==="rand"?rnd(DIALOGUES.filter(x=>x.id!==C?.d?.id)):DIALOGUES.find(x=>x.id===id);
   C={mode:"dialog",d,k:0,good:0};
-  chatAdd(`<b>${d.t}</b><div class="sub">${d.role}. Respóndele como en la vida real. Si no sabes qué decir, toca 🆘.</div>`);
+  chatAdd(`<b>${d.t}</b> <span class="sub">(${d.turns.length} turnos)</span><div class="sub">${d.role}. Respóndele como en la vida real, con tus palabras. Abajo de cada pregunta verás ideas de qué responder.</div>`+(d.vocab?`<div class="vbox"><b>📚 Vocabulario de esta conversación</b>${d.vocab.map(v=>`<div class="vrow"><button class="ghost" onclick="speak('${v[0].replace(/'/g,"\\'")}',.8)">🔊</button><b>${esc(v[0])}</b> = ${esc(v[1])}</div>`).join("")}</div>`:""));
   dialogTurn();
 }
 function dialogTurn(){
   const t=C.d.turns[C.k];C.turn=t;C.tries=0;
-  chatAdd(`${esc(t.i)} ${sayBtn(t.i)}<div class="sub es">${t.es}</div>`);
+  chatAdd(`${esc(t.i)} ${sayBtn(t.i)}<div class="sub es">${t.es}</div>`+(S.cIdeas!==false?`<div class="ideas"><div class="sub"><b>💡 Ideas para responder</b> (usa una o inventa la tuya):</div>${t.ok.map(o=>`<div class="idea">${sayBtn(o)} ${esc(o)}</div>`).join("")}<div class="sub">✏️ ${t.tip}</div></div>`:""));
   speakSeq([{t:t.i,rate:.95}],afterIggy);
 }
 function dialogAnswer(said,conf){
   const t=C.turn;const w=norm(said);
   let best={score:-1};t.ok.forEach(o=>{const r=compare(o,said);if(r.score>best.score)best={...r,a:o}});
   const kw=t.kw.filter(k=>w.includes(norm(k)[0]||k)).length;
-  const good=best.score>=60||(kw>=1&&w.length>=2);
+  const good=best.score>=55||kw>=2||(kw>=1&&w.length<=4);
   const okRoast=rnd(["¡Bien! Sonaste como nativa… bueno, casi. 😏","Perfecto, nadie notó que eres de Bogotá.","Eso. Respuesta de persona funcional. 👏","¡Bien dicho! Ni yo lo hubiera dicho mejor (y soy una iguana bilingüe).","Ok, eso estuvo bien. No te emociones."]);
   coach({said,conf,target:best.a,alts:t.ok,meaningOK:good,tip:t.tip,okRoast,
     onDone:perfect=>{if(perfect)C.good++;C.k++;addDone("talk");save();if(C.k<C.d.turns.length)setTimeout(dialogTurn,400);else dialogEnd()}});
@@ -1267,7 +1274,7 @@ $("startDaily").onclick=()=>{
 function show(v){
   ["home","b1","listen","speak","talk","read","write","set","vocab"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==v));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("act",b.dataset.v===v));
-  if(v==="listen")newListen(); if(v==="speak")newSpeak(); if(v==="talk"){$("cFlow").checked=cFlowOn();if(!$("chat").children.length)newTalk()}
+  if(v==="listen")newListen(); if(v==="speak")newSpeak(); if(v==="talk"){$("cFlow").checked=cFlowOn();$("cIdeas").checked=S.cIdeas!==false;if(!$("chat").children.length)newTalk()}
   if(v!=="talk"){clearTimeout(cTimer);if(activeRec){activeRec.userStop=true;activeRec.stop()}}
   if(v==="read")newRead(); if(v==="write")newWrite(); if(v==="b1")renderB1(); if(v==="vocab")renderVocab();
   if(v==="home")renderHome(); if(v==="set")renderSet();
